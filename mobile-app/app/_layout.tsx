@@ -10,7 +10,6 @@ import {
   Outfit_500Medium,
   Outfit_700Bold,
 } from '@expo-google-fonts/outfit';
-import { Inter_400Regular, Inter_700Bold } from '@expo-google-fonts/inter';
 import '../global.css';
 import { useProtectedRoute } from '../src/hooks/useProtectedRoute';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -65,8 +64,6 @@ export default function RootLayout() {
     Outfit_400Regular,
     Outfit_500Medium,
     Outfit_700Bold,
-    Inter_400Regular,
-    Inter_700Bold,
   });
 
   useEffect(() => {

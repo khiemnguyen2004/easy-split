@@ -1,57 +1,46 @@
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
+import { View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
 import { GlassText } from './GlassText';
+import { IconButton } from './IconButton';
 
 interface GlassHeaderProps {
   title: string;
+  subtitle?: string;
   showBack?: boolean;
   onBack?: () => void;
   rightElement?: React.ReactNode;
-  subtitle?: string;
 }
 
 export const GlassHeader = ({
   title,
+  subtitle,
   showBack = false,
   onBack,
   rightElement,
-  subtitle,
 }: GlassHeaderProps) => {
   const router = useRouter();
-
-  const handleBack = () => {
-    if (onBack) {
-      onBack();
-    } else {
-      router.back();
-    }
-  };
+  const handleBack = () => (onBack ? onBack() : router.back());
 
   return (
-    <View className="px-6 py-4 flex-row items-center justify-between">
-      <View className="flex-row items-center flex-1">
-        {showBack && (
-          <TouchableOpacity
-            onPress={handleBack}
-            className="w-10 h-10 items-center justify-center rounded-xl bg-white/40 border border-indigo-950/10 mr-4 shadow-sm"
-          >
-            <ArrowLeft size={20} color="#1E1B4B" />
-          </TouchableOpacity>
-        )}
+    <View className="flex-row items-center justify-between px-6 py-4">
+      <View className="flex-1 flex-row items-center">
+        {showBack ? (
+          <IconButton icon={ArrowLeft} onPress={handleBack} iconSize={20} className="mr-4" />
+        ) : null}
         <View className="flex-1">
-          {subtitle && (
-            <GlassText variant="caption" className="mb-0.5 opacity-60">
+          {subtitle ? (
+            <GlassText variant="caption" className="mb-0.5">
               {subtitle}
             </GlassText>
-          )}
+          ) : null}
           <GlassText variant="h3" numberOfLines={1}>
             {title}
           </GlassText>
         </View>
       </View>
-      {rightElement && <View className="ml-4">{rightElement}</View>}
+      {rightElement ? <View className="ml-4">{rightElement}</View> : null}
     </View>
   );
 };

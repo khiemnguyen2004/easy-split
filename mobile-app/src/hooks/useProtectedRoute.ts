@@ -52,8 +52,9 @@ export function useProtectedRoute() {
 
     if (!isReady || !navReady) return;
 
-    const inAuthGroup = segments[0] === '(auth)';
-    const atRoot = segments.length === 0 || segments[0] === '';
+    const segmentsArray = segments as string[];
+    const inAuthGroup = segmentsArray[0] === '(auth)';
+    const atRoot = segmentsArray.length === 0 || segmentsArray[0] === '';
 
     if (!session && !inAuthGroup) {
       console.log('[Auth Debug] Redirecting to login');

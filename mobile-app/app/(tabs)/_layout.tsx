@@ -1,51 +1,80 @@
 import { Tabs } from 'expo-router';
 import { Home, Users, Receipt, Settings, Bell } from 'lucide-react-native';
-import { View, StyleSheet } from 'react-native';
+import { View, Pressable, Text, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { colors } from '../../src/theme';
+
+function GlassTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  return (
+    <View
+      style={{
+        position: 'absolute',
+        bottom: 24,
+        left: 20,
+        right: 20,
+        height: 72,
+        borderRadius: 36,
+        flexDirection: 'row',
+        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.4)',
+        shadowColor: colors.content,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.1,
+        shadowRadius: 16,
+      }}
+    >
+      <BlurView
+        intensity={85}
+        tint="light"
+        style={{ ...StyleSheet.absoluteFillObject, borderRadius: 36, overflow: 'hidden' }}
+      />
+
+      {state.routes.map((route, index) => {
+        const { options } = descriptors[route.key];
+        // expo-router maps `href: null` to a hidden tab via display:'none'.
+        if (StyleSheet.flatten(options.tabBarItemStyle)?.display === 'none') return null;
+
+        const focused = state.index === index;
+        const color = focused ? colors.content : colors.contentFaint;
+        const label = typeof options.title === 'string' ? options.title : undefined;
+
+        const onPress = () => {
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: route.key,
+            canPreventDefault: true,
+          });
+          if (!focused && !event.defaultPrevented) {
+            navigation.navigate(route.name);
+          }
+        };
+
+        return (
+          <Pressable
+            key={route.key}
+            onPress={onPress}
+            accessibilityRole="button"
+            accessibilityState={{ selected: focused }}
+            style={{ flex: 1, height: '100%', alignItems: 'center', justifyContent: 'center' }}
+          >
+            {options.tabBarIcon?.({ focused, color, size: 24 })}
+            {label ? (
+              <Text style={{ fontFamily: 'Outfit_500Medium', fontSize: 10, color, marginTop: 2 }}>
+                {label}
+              </Text>
+            ) : null}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
 
 export default function TabLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: '#FF512F',
-        tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.4)',
-        tabBarStyle: {
-          position: 'absolute',
-          bottom: 24,
-          left: 20,
-          right: 20,
-          height: 70,
-          borderRadius: 35,
-          backgroundColor: 'rgba(255, 255, 255, 0.08)',
-          borderTopWidth: 0,
-          elevation: 0,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 10 },
-          shadowOpacity: 0.2,
-          shadowRadius: 20,
-          paddingBottom: 0,
-          borderWidth: 1.5,
-          borderColor: 'rgba(255, 255, 255, 0.15)',
-        },
-        tabBarBackground: () => (
-          <BlurView
-            intensity={60}
-            tint="dark"
-            style={{
-              ...StyleSheet.absoluteFillObject,
-              borderRadius: 35,
-              overflow: 'hidden',
-            }}
-          />
-        ),
-        tabBarLabelStyle: {
-          fontFamily: 'Outfit_500Medium',
-          fontSize: 10,
-          marginBottom: 8,
-        },
-      }}
-    >
+    <Tabs tabBar={(props) => <GlassTabBar {...props} />} screenOptions={{ headerShown: false }}>
       <Tabs.Screen
         name="index"
         options={{
@@ -60,19 +89,13 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <Users size={size} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="debts"
-        options={{
-          href: null,
-        }}
-      />
+      <Tabs.Screen name="debts" options={{ href: null }} />
       <Tabs.Screen
         name="expenses"
         options={{
-          title: '',
-          tabBarIcon: ({ color, size }) => (
-            <View className="bg-sunrise-orange w-14 h-14 rounded-2xl items-center justify-center -mt-6 shadow-lg shadow-sunrise-orange/40">
-              <Receipt size={28} color="white" />
+          tabBarIcon: () => (
+            <View className="h-12 w-12 items-center justify-center rounded-full bg-content shadow-lg shadow-content/30">
+              <Receipt size={22} color={colors.white} />
             </View>
           ),
         }}

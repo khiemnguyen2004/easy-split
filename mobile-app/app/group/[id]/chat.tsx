@@ -1,32 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
-  Text,
-  ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   TextInput,
   KeyboardAvoidingView,
   Platform,
   Image,
   FlatList,
   Alert,
+  StyleSheet,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  ArrowLeft,
-  Send,
-  Plus,
-  Image as ImageIcon,
-  Camera,
-  X,
-  Smartphone,
-} from 'lucide-react-native';
+import { ArrowLeft, Send, Image as ImageIcon, X } from 'lucide-react-native';
 import { supabase } from '../../../src/api/supabase';
 import { useAuthStore } from '../../../src/store/useAuthStore';
 import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
+import { BlurView } from 'expo-blur';
+import { colors } from '../../../src/theme';
+import { GlassText, IconButton, Avatar, Loader } from '../../../src/components/ui';
 
 interface Message {
   message_id: string;
@@ -95,8 +88,7 @@ export default function ChatScreen() {
           filter: `group_id=eq.${groupId}`,
         },
         async (payload) => {
-          // Fetch the full message data including profile
-          const { data, error } = await supabase
+          const { data } = await supabase
             .from('messages')
             .select(
               `
@@ -145,20 +137,14 @@ export default function ChatScreen() {
     try {
       const groupId = Array.isArray(id) ? id[0] : id;
 
-      // 1. Create message
       const { data: msgData, error: msgError } = await supabase
         .from('messages')
-        .insert({
-          group_id: groupId,
-          sender_id: user.id,
-          content: inputText.trim(),
-        })
+        .insert({ group_id: groupId, sender_id: user.id, content: inputText.trim() })
         .select()
         .single();
 
       if (msgError) throw msgError;
 
-      // 2. Handle images
       if (images.length > 0) {
         const mediaPromises = images.map(async (base64) => {
           const fileName = `${Math.random()}.jpg`;
@@ -174,11 +160,9 @@ export default function ChatScreen() {
             data: { publicUrl },
           } = supabase.storage.from('attachments').getPublicUrl(filePath);
 
-          return supabase.from('media').insert({
-            message_id: msgData.message_id,
-            url: publicUrl,
-            type: 'image',
-          });
+          return supabase
+            .from('media')
+            .insert({ message_id: msgData.message_id, url: publicUrl, type: 'image' });
         });
 
         await Promise.all(mediaPromises);
@@ -196,75 +180,81 @@ export default function ChatScreen() {
   const renderMessage = ({ item }: { item: Message }) => {
     const isMe = item.sender_id === user?.id;
     return (
-      <View className={`flex-row mb-4 ${isMe ? 'justify-end' : 'justify-start'}`}>
-        {!isMe && (
-          <View className="w-8 h-8 rounded-full bg-gray-200 items-center justify-center mr-2 mt-auto">
-            <Text className="text-[10px] font-bold">{item.profiles?.full_name?.charAt(0)}</Text>
-          </View>
-        )}
+      <View className={`mb-5 flex-row ${isMe ? 'justify-end' : 'justify-start'}`}>
+        {!isMe ? (
+          <Avatar name={item.profiles?.full_name} size="sm" className="mr-2 mt-auto" />
+        ) : null}
         <View className={`max-w-[80%] ${isMe ? 'items-end' : 'items-start'}`}>
-          {!isMe && (
-            <Text className="text-gray-400 text-[10px] ml-1 mb-1">{item.profiles?.full_name}</Text>
-          )}
+          {!isMe ? (
+            <GlassText variant="caption" className="mb-1 ml-1">
+              {item.profiles?.full_name}
+            </GlassText>
+          ) : null}
           <View
-            className={`p-4 rounded-[24px] ${isMe ? 'bg-indigo-600 rounded-tr-none' : 'bg-gray-100 rounded-tl-none'}`}
+            className={`rounded-[24px] p-4 ${
+              isMe
+                ? 'rounded-tr-none bg-content'
+                : 'rounded-tl-none border border-surface-line bg-surface-glass'
+            }`}
           >
             {item.content ? (
-              <Text
-                className={`text-base ${isMe ? 'text-white font-medium' : 'text-gray-900 font-medium'}`}
+              <GlassText
+                className={`font-outfit-medium text-base ${isMe ? 'text-white' : 'text-content'}`}
               >
                 {item.content}
-              </Text>
+              </GlassText>
             ) : null}
 
-            {item.media && item.media.length > 0 && (
+            {item.media && item.media.length > 0 ? (
               <View className={`flex-row flex-wrap gap-2 ${item.content ? 'mt-3' : ''}`}>
                 {item.media.map((m, i) => (
-                  <View key={i} className="w-40 h-40 rounded-xl overflow-hidden">
-                    <Image source={{ uri: m.url }} className="w-full h-full" resizeMode="cover" />
+                  <View key={i} className="h-40 w-40 overflow-hidden rounded-xl">
+                    <Image source={{ uri: m.url }} className="h-full w-full" resizeMode="cover" />
                   </View>
                 ))}
               </View>
-            )}
+            ) : null}
           </View>
-          <Text className="text-gray-300 text-[9px] mt-1 px-1">
+          <GlassText variant="caption" className="mt-1 px-1 opacity-60">
             {new Date(item.created_at).toLocaleTimeString([], {
               hour: '2-digit',
               minute: '2-digit',
             })}
-          </Text>
+          </GlassText>
         </View>
       </View>
     );
   };
 
+  const canSend = inputText.trim().length > 0 || images.length > 0;
+
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView className="flex-1" edges={['top']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        {/* Header */}
-        <View className="px-6 py-4 flex-row items-center border-b border-gray-100 bg-white">
-          <TouchableOpacity onPress={() => router.back()} className="p-2 -ml-2">
-            <ArrowLeft size={24} color="#1F2937" />
-          </TouchableOpacity>
-          <View className="ml-2">
-            <Text className="text-lg font-bold text-gray-900">Thảo luận nhóm</Text>
-            <View className="flex-row items-center">
-              <View className="w-2 h-2 rounded-full bg-emerald-500 mr-1.5" />
-              <Text className="text-emerald-600 text-[10px] font-bold uppercase tracking-widest">
+        <View className="flex-row items-center border-b border-surface-line px-6 py-4">
+          <IconButton
+            icon={ArrowLeft}
+            iconSize={20}
+            onPress={() => router.back()}
+            className="mr-4"
+          />
+          <View className="flex-1">
+            <GlassText variant="h3">Thảo luận nhóm</GlassText>
+            <View className="mt-0.5 flex-row items-center">
+              <View className="mr-1.5 h-1.5 w-1.5 rounded-full bg-success" />
+              <GlassText className="font-outfit-bold text-[10px] uppercase tracking-wider text-success">
                 Trực tuyến
-              </Text>
+              </GlassText>
             </View>
           </View>
         </View>
 
         {loading ? (
-          <View className="flex-1 justify-center items-center">
-            <ActivityIndicator color="#4F46E5" />
-          </View>
+          <Loader fullscreen />
         ) : (
           <FlatList
             ref={flatListRef}
@@ -276,51 +266,53 @@ export default function ChatScreen() {
           />
         )}
 
-        {/* Image Preview */}
-        {images.length > 0 && (
-          <View className="px-6 py-3 border-t border-gray-50 flex-row gap-2">
+        {images.length > 0 ? (
+          <View className="flex-row gap-2 border-t border-surface-line px-6 py-3">
             {images.map((img, i) => (
-              <View key={i} className="w-16 h-16 rounded-xl overflow-hidden relative">
+              <View key={i} className="relative h-16 w-16 overflow-hidden rounded-xl">
                 <Image
                   source={{ uri: `data:image/jpeg;base64,${img}` }}
-                  className="w-full h-full"
+                  className="h-full w-full"
                 />
                 <TouchableOpacity
-                  className="absolute top-1 right-1 bg-black/50 rounded-full p-1"
+                  className="absolute right-1 top-1 rounded-full bg-black/50 p-1"
                   onPress={() => setImages((prev) => prev.filter((_, idx) => idx !== i))}
                 >
-                  <X size={10} color="white" />
+                  <X size={10} color={colors.white} />
                 </TouchableOpacity>
               </View>
             ))}
           </View>
-        )}
+        ) : null}
 
-        {/* Input Area */}
-        <View className="p-4 border-t border-gray-100 flex-row items-end gap-3 bg-white">
+        <View className="flex-row items-end gap-3 overflow-hidden border-t border-surface-line bg-surface-glass p-4">
+          <BlurView intensity={30} tint="light" style={StyleSheet.absoluteFillObject} />
           <TouchableOpacity
             onPress={handlePickImage}
-            className="w-12 h-12 bg-gray-50 rounded-2xl items-center justify-center border border-gray-100"
+            className="h-12 w-12 items-center justify-center rounded-2xl border border-surface-line bg-surface-fill"
           >
-            <ImageIcon size={20} color="#6366F1" />
+            <ImageIcon size={20} color={colors.content} />
           </TouchableOpacity>
 
-          <View className="flex-1 bg-gray-50 rounded-[28px] border border-gray-100 flex-row items-end px-4 py-2">
+          <View className="flex-1 flex-row items-end rounded-[24px] border border-surface-line bg-surface-fill px-4 py-2">
             <TextInput
               placeholder="Gửi tin nhắn..."
               value={inputText}
               onChangeText={setInputText}
               multiline
-              className="flex-1 text-gray-900 text-base max-h-32 py-1"
+              className="max-h-32 flex-1 py-1 font-outfit text-base text-content"
+              placeholderTextColor={colors.placeholder}
             />
           </View>
 
           <TouchableOpacity
             onPress={handleSendMessage}
-            disabled={submitting}
-            className={`w-12 h-12 rounded-2xl items-center justify-center shadow-lg shadow-indigo-100 ${inputText.trim() || images.length > 0 ? 'bg-indigo-600' : 'bg-gray-200'}`}
+            disabled={submitting || !canSend}
+            className={`h-12 w-12 items-center justify-center rounded-2xl shadow-md ${
+              canSend ? 'bg-content shadow-content/20' : 'bg-surface-fill opacity-50'
+            }`}
           >
-            <Send size={20} color="white" />
+            <Send size={20} color={colors.white} />
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>

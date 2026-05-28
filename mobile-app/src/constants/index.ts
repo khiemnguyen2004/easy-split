@@ -10,12 +10,4 @@ export const Constants = {
       DEBT_SETTLEMENTS: 'debt_settlements',
     },
   },
-  THEME: {
-    COLORS: {
-      PRIMARY: '#4F46E5', // Indigo-600
-      SUCCESS: '#10B981', // Emerald-500
-      BACKGROUND: '#F9FAFB', // Gray-50
-      TEXT: '#111827', // Gray-900
-    },
-  },
 };

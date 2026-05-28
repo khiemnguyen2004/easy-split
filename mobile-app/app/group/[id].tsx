@@ -1,12 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import {
-  View,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-  RefreshControl,
-  Clipboard,
-} from 'react-native';
+import { View, TouchableOpacity, RefreshControl, Clipboard } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
@@ -17,17 +10,40 @@ import {
   Copy,
   PiggyBank,
   MessageCircle,
-  ChevronRight,
   Wallet,
   ShieldCheck,
   Check,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useGroupDetails } from '../../src/hooks/useGroupDetails';
-import { GlassCard } from '../../src/components/ui/GlassCard';
-import { GlassText } from '../../src/components/ui/GlassText';
-import { SunriseButton } from '../../src/components/ui/SunriseButton';
-import { GlassHeader } from '../../src/components/ui/GlassHeader';
+import { colors } from '../../src/theme';
+import {
+  Screen,
+  GlassCard,
+  GlassText,
+  Button,
+  IconButton,
+  ListItem,
+  EmptyState,
+  Avatar,
+  Loader,
+} from '../../src/components/ui';
+
+const TABS = [
+  { id: 'expenses', label: 'Chi tiêu', icon: Receipt },
+  { id: 'settlements', label: 'Khoản nợ', icon: TrendingUp },
+  { id: 'funds', label: 'Quỹ', icon: PiggyBank },
+] as const;
+
+const BALANCE_TONE = {
+  positive: { badge: 'bg-success/20 border-success/20', text: 'text-success', label: 'Được trả' },
+  negative: { badge: 'bg-danger/20 border-danger/20', text: 'text-danger', label: 'Cần trả' },
+  zero: {
+    badge: 'bg-surface-fill border-surface-line',
+    text: 'text-content-faint',
+    label: 'Cân bằng',
+  },
+};
 
 export default function GroupDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -46,14 +62,9 @@ export default function GroupDetailsScreen() {
     }, [fetchData])
   );
 
-  const formatCurrency = (amount: number) => {
-    return amount.toLocaleString('vi-VN') + 'đ';
-  };
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-  };
+  const formatCurrency = (amount: number) => amount.toLocaleString('vi-VN') + 'đ';
+  const formatDate = (dateString: string) =>
+    new Date(dateString).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
 
   const copyInviteCode = () => {
     if (group?.invite_code) {
@@ -63,19 +74,15 @@ export default function GroupDetailsScreen() {
     }
   };
 
-  if (loading) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <ActivityIndicator color="#FF512F" />
-      </View>
-    );
-  }
+  if (loading) return <Loader fullscreen />;
 
   if (!group) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center px-6">
-        <GlassText variant="body" className="mb-6 opacity-60">Không tìm thấy thông tin nhóm.</GlassText>
-        <SunriseButton title="Quay lại" onPress={() => router.back()} className="w-40" />
+        <GlassText variant="body" className="mb-6 text-content-muted">
+          Không tìm thấy thông tin nhóm.
+        </GlassText>
+        <Button title="Quay lại" onPress={() => router.back()} className="w-40" />
       </SafeAreaView>
     );
   }
@@ -83,276 +90,208 @@ export default function GroupDetailsScreen() {
   const totalGroupExpense = expenses.reduce((sum, exp) => sum + exp.amount, 0);
 
   return (
-    <SafeAreaView className="flex-1" edges={['top']}>
-      <GlassHeader
-        title={group.group_name}
-        showBack
-        rightElement={
-          <View className="flex-row items-center gap-2">
-            <TouchableOpacity
-              onPress={() => router.push(`/group/${id}/chat`)}
-              className="w-10 h-10 items-center justify-center rounded-xl bg-indigo-950/5 border border-indigo-950/10"
-            >
-              <MessageCircle size={18} color="#1E1B4B" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => router.push(`/group/${id}/members`)}
-              className="w-10 h-10 items-center justify-center rounded-xl bg-indigo-950/5 border border-indigo-950/10"
-            >
-              <Settings size={18} color="#1E1B4B" />
-            </TouchableOpacity>
-          </View>
-        }
-      />
-
-      <View className="flex-1">
-        <ScrollView
-          className="flex-1 px-6"
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF512F" />
-          }
-        >
-          <View className="pt-2 pb-32">
-            {/* Group Summary Card */}
-            <GlassCard intensity={45} className="mb-8 border-indigo-950/10">
-              <View className="flex-row justify-between items-start mb-6">
-                <View>
-                  <GlassText variant="caption" className="mb-2 uppercase tracking-widest opacity-60">
-                    Tổng chi tiêu nhóm
-                  </GlassText>
-                  <GlassText className="text-4xl font-outfit-bold">
-                    {formatCurrency(totalGroupExpense)}
-                  </GlassText>
-                </View>
-                <View className="bg-sunrise-orange/20 p-4 rounded-2xl border border-sunrise-orange/30">
-                  <Wallet size={24} color="#FF512F" />
-                </View>
-              </View>
-
-              <View className="flex-row items-center justify-between">
-                <View className="flex-row items-center">
-                  <View className="flex-row -space-x-3 mr-3">
-                    {members.slice(0, 3).map((m, i) => (
-                      <View 
-                        key={m.user_id} 
-                        className="w-8 h-8 rounded-full bg-white/20 border-2 border-indigo-dark items-center justify-center"
-                        style={{ zIndex: 10 - i }}
-                      >
-                        <GlassText className="text-[10px] font-outfit-bold">
-                          {m.full_name?.charAt(0)}
-                        </GlassText>
-                      </View>
-                    ))}
-                    {members.length > 3 && (
-                      <View className="w-8 h-8 rounded-full bg-white/10 border-2 border-indigo-dark items-center justify-center">
-                        <GlassText className="text-[8px] font-outfit-bold">+{members.length - 3}</GlassText>
-                      </View>
-                    )}
-                  </View>
-                  <GlassText variant="caption" className="opacity-40 text-[10px] uppercase font-outfit-bold">
-                    {members.length} thành viên
-                  </GlassText>
-                </View>
-
-                <TouchableOpacity 
-                  onPress={copyInviteCode}
-                  className={`flex-row items-center px-3 py-1.5 rounded-lg border ${copied ? 'bg-emerald-400/20 border-emerald-400/30' : 'bg-indigo-950/5 border-indigo-950/10'}`}
-                >
-                  <GlassText className={`text-[9px] font-outfit-bold uppercase tracking-tight mr-1.5 ${copied ? 'text-emerald-400' : 'text-indigo-950/70'}`}>
-                    {copied ? 'Đã chép' : group.invite_code}
-                  </GlassText>
-                  {copied ? <Check size={10} color="#34D399" /> : <Copy size={10} color="#1E1B4B" className="opacity-70" />}
-                </TouchableOpacity>
-              </View>
-            </GlassCard>
-
-            {/* Glass Tab Selector */}
-            <View 
-              className="flex-row rounded-2xl p-1 mb-8 border"
-              style={{
-                backgroundColor: 'rgba(30, 27, 75, 0.05)',
-                borderColor: 'rgba(30, 27, 75, 0.1)',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 1 },
-                shadowOpacity: 0.05,
-                shadowRadius: 2,
-              }}
-            >
-              {[
-                { id: 'expenses', label: 'Chi tiêu', icon: Receipt },
-                { id: 'settlements', label: 'Khoản nợ', icon: TrendingUp },
-                { id: 'funds', label: 'Quỹ', icon: PiggyBank },
-              ].map((tab) => (
-                <TouchableOpacity
-                  key={tab.id}
-                  onPress={() => setActiveTab(tab.id as any)}
-                  className="flex-1 py-3 rounded-xl flex-row items-center justify-center"
-                  style={activeTab === tab.id ? {
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    borderColor: 'rgba(255, 255, 255, 0.1)',
-                    borderWidth: 1,
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 2,
-                  } : undefined}
-                >
-                  <tab.icon 
-                    size={16} 
-                    color={activeTab === tab.id ? '#1E1B4B' : 'rgba(30,27,75,0.4)'} 
-                  />
-                  <GlassText
-                    className={`ml-2 text-[11px] font-outfit-bold uppercase tracking-tight ${activeTab === tab.id ? '' : 'opacity-40'}`}
-                  >
-                    {tab.label}
-                  </GlassText>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* List Content */}
-            {activeTab === 'expenses' && (
-              <View>
-                <View className="flex-row justify-between items-center mb-6">
-                  <GlassText variant="h3">Lịch sử giao dịch</GlassText>
-                </View>
-
-                {expenses.length === 0 ? (
-                  <GlassCard intensity={15} className="items-center py-12 border-dashed border-indigo-950/10">
-                    <View className="w-16 h-16 bg-indigo-950/5 rounded-3xl items-center justify-center mb-6 border border-indigo-950/10">
-                      <Receipt size={32} color="rgba(30, 27, 75, 0.4)" />
-                    </View>
-                    <GlassText variant="body" className="opacity-40 text-center px-12">
-                      Chưa có khoản chi nào được ghi lại.
-                    </GlassText>
-                  </GlassCard>
-                ) : (
-                  <View>
-                    {expenses.map((expense) => (
-                      <View key={expense.expense_id}>
-                        <GlassCard
-                          intensity={20}
-                          className="mb-4 p-5 flex-row items-center border-indigo-950/5"
-                        >
-                          <View className="w-12 h-12 rounded-xl bg-indigo-950/5 items-center justify-center mr-4 border border-indigo-950/10 shadow-sm">
-                            <Receipt size={22} color="#1E1B4B" />
-                          </View>
-                          <View className="flex-1">
-                            <GlassText className="font-outfit-bold text-base mb-0.5" numberOfLines={1}>
-                              {expense.description}
-                            </GlassText>
-                            <GlassText variant="caption" className="opacity-40 text-[10px] uppercase font-outfit-bold tracking-tight">
-                              Bởi {expense.profiles?.full_name?.split(' ')[0]} • {formatDate(expense.created_at)}
-                            </GlassText>
-                          </View>
-                          <GlassText variant="h3" className="ml-3 text-lg">
-                            {formatCurrency(expense.amount)}
-                          </GlassText>
-                        </GlassCard>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </View>
-            )}
-
-            {activeTab === 'settlements' && (
-              <View>
-                <View className="flex-row justify-between items-center mb-6">
-                  <GlassText variant="h3">Tình hình tài chính</GlassText>
-                  <View className="flex-row items-center bg-emerald-400/10 px-3 py-1.5 rounded-full border border-emerald-400/20">
-                    <ShieldCheck size={14} color="#34D399" />
-                    <GlassText className="text-[10px] font-outfit-bold ml-1.5 text-emerald-400 uppercase tracking-tighter">Bảo mật nợ</GlassText>
-                  </View>
-                </View>
-
-                <GlassCard intensity={25} className="mb-8 p-0 border-indigo-950/10 overflow-hidden">
-                  {netBalances.map((item, index) => {
-                    const isPositive = item.amount > 0;
-                    const isZero = item.amount === 0;
-
-                    return (
-                      <View
-                        key={item.user_id}
-                        className={`flex-row items-center p-5 ${index !== netBalances.length - 1 ? 'border-b border-indigo-950/5' : ''}`}
-                      >
-                        <View
-                          className={`w-12 h-12 rounded-2xl items-center justify-center mr-4 border shadow-sm ${isPositive ? 'bg-emerald-400/20 shadow-emerald-400/10 border-emerald-400/20' : isZero ? 'bg-indigo-950/5 border-indigo-950/10' : 'bg-rose-400/20 shadow-rose-400/10 border-rose-400/20'}`}
-                        >
-                          <GlassText
-                            className={`font-outfit-bold text-lg ${isPositive ? 'text-emerald-400' : isZero ? 'text-indigo-950/40' : 'text-rose-400'}`}
-                          >
-                            {item.full_name?.charAt(0)}
-                          </GlassText>
-                        </View>
-                        <View className="flex-1">
-                          <GlassText className="font-outfit-bold text-base mb-0.5">
-                            {item.full_name} {item.user_id === user?.id ? '(Bạn)' : ''}
-                          </GlassText>
-                          <GlassText
-                            variant="caption"
-                            className={`text-[10px] uppercase font-outfit-bold tracking-widest ${isPositive ? 'text-emerald-400/70' : isZero ? 'opacity-20' : 'text-rose-400/70'}`}
-                          >
-                            {isPositive ? 'Được trả' : isZero ? 'Cân bằng' : 'Cần trả'}
-                          </GlassText>
-                        </View>
-                        <View className="items-end">
-                          <GlassText
-                            variant="h3"
-                            className={`text-lg ${isPositive ? 'text-emerald-400' : isZero ? 'opacity-30' : 'text-rose-400'}`}
-                          >
-                            {isPositive ? '+' : ''}
-                            {formatCurrency(item.amount)}
-                          </GlassText>
-                        </View>
-                      </View>
-                    );
-                  })}
-                </GlassCard>
-
-                <SunriseButton
-                  title="Quyết toán ngay"
-                  onPress={() => router.push(`/group/${id}/settlement-detail`)}
-                  className="w-full"
-                />
-              </View>
-            )}
-
-            {activeTab === 'funds' && (
-              <View>
-                <View className="flex-row justify-between items-center mb-6">
-                  <GlassText variant="h3">Quỹ chung của nhóm</GlassText>
-                </View>
-                <GlassCard intensity={20} className="p-10 items-center justify-center border-indigo-950/10 border-dashed">
-                  <View className="w-20 h-20 bg-indigo-950/5 rounded-full items-center justify-center mb-6 border border-indigo-950/10 shadow-inner">
-                    <PiggyBank size={40} color="rgba(30, 27, 75, 0.4)" />
-                  </View>
-                  <GlassText variant="h3" className="mb-2">Tính năng sắp ra mắt</GlassText>
-                  <GlassText variant="body" className="text-center opacity-40 px-6">
-                    Quỹ chung sẽ giúp cả nhóm quản lý các khoản chi tiêu định kỳ dễ dàng hơn.
-                  </GlassText>
-                </GlassCard>
-              </View>
-            )}
-          </View>
-        </ScrollView>
-
-        {/* Primary Floating Action Button */}
+    <Screen
+      title={group.group_name}
+      showBack
+      headerRight={
+        <View className="flex-row items-center gap-2">
+          <IconButton icon={MessageCircle} onPress={() => router.push(`/group/${id}/chat`)} />
+          <IconButton icon={Settings} onPress={() => router.push(`/group/${id}/members`)} />
+        </View>
+      }
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+      }
+      overlay={
         <View className="absolute bottom-8 right-6">
-           <TouchableOpacity onPress={() => router.push(`/group/${id}/add-expense`)} activeOpacity={0.9}>
-            <View className="w-16 h-16 rounded-[22px] overflow-hidden shadow-2xl shadow-sunrise-orange/40">
-              <SunriseButton
-                title=""
-                onPress={() => router.push(`/group/${id}/add-expense`)}
-                style={{ width: 64, height: 64, borderRadius: 0 }}
-              >
-                <Plus size={32} color="white" />
-              </SunriseButton>
+          <IconButton
+            icon={Plus}
+            variant="fab"
+            iconSize={32}
+            onPress={() => router.push(`/group/${id}/add-expense`)}
+          />
+        </View>
+      }
+    >
+      <GlassCard intensity={45} className="mb-8">
+        <View className="mb-6 flex-row items-start justify-between">
+          <View>
+            <GlassText variant="caption" className="mb-2">
+              Tổng chi tiêu nhóm
+            </GlassText>
+            <GlassText className="font-outfit-bold text-4xl">
+              {formatCurrency(totalGroupExpense)}
+            </GlassText>
+          </View>
+          <View className="rounded-2xl border border-accent/30 bg-accent/20 p-4">
+            <Wallet size={24} color={colors.accent} />
+          </View>
+        </View>
+
+        <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center">
+            <View className="mr-3 flex-row -space-x-3">
+              {members.slice(0, 3).map((m, i) => (
+                <Avatar key={m.user_id} name={m.full_name} size="sm" style={{ zIndex: 10 - i }} />
+              ))}
+              {members.length > 3 ? (
+                <View className="h-8 w-8 items-center justify-center rounded-full border border-surface-line bg-surface-fill">
+                  <GlassText className="font-outfit-bold text-[8px]">
+                    +{members.length - 3}
+                  </GlassText>
+                </View>
+              ) : null}
             </View>
+            <GlassText variant="caption" className="text-[10px]">
+              {members.length} thành viên
+            </GlassText>
+          </View>
+
+          <TouchableOpacity
+            onPress={copyInviteCode}
+            className={`flex-row items-center rounded-lg border px-3 py-1.5 ${
+              copied ? 'border-success/30 bg-success/20' : 'border-surface-line bg-surface-fill'
+            }`}
+          >
+            <GlassText
+              className={`mr-1.5 font-outfit-bold text-[9px] uppercase tracking-tight ${
+                copied ? 'text-success' : 'text-content-muted'
+              }`}
+            >
+              {copied ? 'Đã chép' : group.invite_code}
+            </GlassText>
+            {copied ? (
+              <Check size={10} color={colors.success} />
+            ) : (
+              <Copy size={10} color={colors.content} />
+            )}
           </TouchableOpacity>
         </View>
+      </GlassCard>
+
+      <View className="mb-8 flex-row rounded-2xl border border-surface-line bg-surface-fill p-1">
+        {TABS.map((tab) => {
+          const active = activeTab === tab.id;
+          return (
+            <TouchableOpacity
+              key={tab.id}
+              onPress={() => setActiveTab(tab.id)}
+              className={`flex-1 flex-row items-center justify-center rounded-xl py-3 ${
+                active ? 'border border-surface-line bg-surface-glass' : ''
+              }`}
+            >
+              <tab.icon size={16} color={active ? colors.content : colors.contentFaint} />
+              <GlassText
+                className={`ml-2 font-outfit-bold text-[11px] uppercase tracking-tight ${
+                  active ? 'text-content' : 'text-content-faint'
+                }`}
+              >
+                {tab.label}
+              </GlassText>
+            </TouchableOpacity>
+          );
+        })}
       </View>
-    </SafeAreaView>
+
+      {activeTab === 'expenses' ? (
+        <View>
+          <GlassText variant="h3" className="mb-6">
+            Lịch sử giao dịch
+          </GlassText>
+          {expenses.length === 0 ? (
+            <EmptyState icon={Receipt} title="Chưa có khoản chi nào được ghi lại." />
+          ) : (
+            expenses.map((expense) => (
+              <ListItem
+                key={expense.expense_id}
+                icon={Receipt}
+                title={expense.description}
+                subtitle={`Bởi ${expense.profiles?.full_name?.split(' ')[0]} • ${formatDate(expense.created_at)}`}
+                className="mb-4"
+                trailing={
+                  <GlassText variant="h3" className="text-lg">
+                    {formatCurrency(expense.amount)}
+                  </GlassText>
+                }
+              />
+            ))
+          )}
+        </View>
+      ) : null}
+
+      {activeTab === 'settlements' ? (
+        <View>
+          <View className="mb-6 flex-row items-center justify-between">
+            <GlassText variant="h3">Tình hình tài chính</GlassText>
+            <View className="flex-row items-center rounded-full border border-success/20 bg-success/10 px-3 py-1.5">
+              <ShieldCheck size={14} color={colors.success} />
+              <GlassText className="ml-1.5 font-outfit-bold text-[10px] uppercase tracking-tighter text-success">
+                Bảo mật nợ
+              </GlassText>
+            </View>
+          </View>
+
+          <GlassCard intensity={25} className="mb-8" padding="p-0">
+            {netBalances.map((item, index) => {
+              const tone =
+                item.amount === 0
+                  ? BALANCE_TONE.zero
+                  : item.amount > 0
+                    ? BALANCE_TONE.positive
+                    : BALANCE_TONE.negative;
+              return (
+                <View
+                  key={item.user_id}
+                  className={`flex-row items-center p-5 ${
+                    index !== netBalances.length - 1 ? 'border-b border-surface-line' : ''
+                  }`}
+                >
+                  <View
+                    className={`mr-4 h-12 w-12 items-center justify-center rounded-2xl border ${tone.badge}`}
+                  >
+                    <GlassText className={`font-outfit-bold text-lg ${tone.text}`}>
+                      {item.full_name?.charAt(0)}
+                    </GlassText>
+                  </View>
+                  <View className="flex-1">
+                    <GlassText className="mb-0.5 font-outfit-bold text-base">
+                      {item.full_name} {item.user_id === user?.id ? '(Bạn)' : ''}
+                    </GlassText>
+                    <GlassText
+                      className={`font-outfit-bold text-[10px] uppercase tracking-widest ${tone.text}`}
+                    >
+                      {tone.label}
+                    </GlassText>
+                  </View>
+                  <GlassText variant="h3" className={`text-lg ${tone.text}`}>
+                    {item.amount > 0 ? '+' : ''}
+                    {formatCurrency(item.amount)}
+                  </GlassText>
+                </View>
+              );
+            })}
+          </GlassCard>
+
+          <Button
+            title="Quyết toán ngay"
+            onPress={() => router.push(`/group/${id}/settlement-detail`)}
+            className="w-full"
+          />
+        </View>
+      ) : null}
+
+      {activeTab === 'funds' ? (
+        <View>
+          <GlassText variant="h3" className="mb-6">
+            Quỹ chung của nhóm
+          </GlassText>
+          <EmptyState
+            icon={PiggyBank}
+            title="Tính năng sắp ra mắt"
+            description="Quỹ chung sẽ giúp cả nhóm quản lý các khoản chi tiêu định kỳ dễ dàng hơn."
+          />
+        </View>
+      ) : null}
+    </Screen>
   );
 }

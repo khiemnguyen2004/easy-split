@@ -1,20 +1,63 @@
 import React from 'react';
-import { View, ScrollView, TouchableOpacity, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, TouchableOpacity, Alert } from 'react-native';
 import {
   User,
   Bell,
-  Lock,
   CircleHelp,
   LogOut,
   ChevronRight,
   ShieldCheck,
   Smartphone,
+  LucideIcon,
 } from 'lucide-react-native';
 import { useHomeDashboard } from '../../src/hooks/useHomeDashboard';
-import { GlassCard } from '../../src/components/ui/GlassCard';
-import { GlassText } from '../../src/components/ui/GlassText';
-import { GlassHeader } from '../../src/components/ui/GlassHeader';
+import { colors } from '../../src/theme';
+import { Screen, GlassCard, GlassText } from '../../src/components/ui';
+
+interface SettingRowProps {
+  icon: LucideIcon;
+  label: string;
+  value?: string;
+  onPress?: () => void;
+  destructive?: boolean;
+}
+
+const SettingRow = ({
+  icon: Icon,
+  label,
+  value,
+  onPress,
+  destructive = false,
+}: SettingRowProps) => (
+  <TouchableOpacity
+    onPress={onPress}
+    activeOpacity={0.7}
+    className="flex-row items-center justify-between py-4"
+  >
+    <View className="flex-row items-center">
+      <View
+        className={`mr-4 h-10 w-10 items-center justify-center rounded-xl ${
+          destructive ? 'bg-danger/10' : 'border border-surface-line bg-surface-fill'
+        }`}
+      >
+        <Icon size={20} color={destructive ? colors.danger : colors.content} />
+      </View>
+      <GlassText className={`font-outfit-medium text-base ${destructive ? 'text-danger' : ''}`}>
+        {label}
+      </GlassText>
+    </View>
+    <View className="flex-row items-center">
+      {value ? (
+        <GlassText variant="caption" className="mr-3">
+          {value}
+        </GlassText>
+      ) : null}
+      <ChevronRight size={18} color={colors.contentFaint} />
+    </View>
+  </TouchableOpacity>
+);
+
+const Divider = () => <View className="h-px bg-surface-line" />;
 
 export default function SettingsScreen() {
   const { user, signOut } = useHomeDashboard();
@@ -26,78 +69,49 @@ export default function SettingsScreen() {
     ]);
   };
 
-  const SettingItem = ({ icon: Icon, label, value, onPress, isDestructive = false }: any) => (
-    <TouchableOpacity
-      onPress={onPress}
-      activeOpacity={0.7}
-      className="flex-row items-center justify-between py-4"
-    >
-      <View className="flex-row items-center">
-        <View className={`w-10 h-10 rounded-xl items-center justify-center mr-4 ${isDestructive ? 'bg-rose-400/10' : 'bg-indigo-950/5 border border-indigo-950/10'}`}>
-          <Icon size={20} color={isDestructive ? '#FB7185' : '#1E1B4B'} />
+  return (
+    <Screen title="Cài đặt">
+      <GlassCard intensity={30} className="mb-8 flex-row items-center" padding="p-6">
+        <View className="mr-5 h-16 w-16 items-center justify-center rounded-full border-2 border-accent/30 bg-accent/20">
+          <User size={32} color={colors.accent} />
         </View>
-        <GlassText className={`text-base font-outfit-medium ${isDestructive ? 'text-rose-400' : ''}`}>
-          {label}
+        <View className="flex-1">
+          <GlassText variant="h3">{user?.user_metadata?.full_name || 'Người dùng'}</GlassText>
+          <GlassText variant="caption" className="mt-0.5">
+            {user?.email}
+          </GlassText>
+        </View>
+      </GlassCard>
+
+      <GlassText variant="caption" className="mb-3 ml-1">
+        Tài khoản
+      </GlassText>
+      <GlassCard intensity={20} className="mb-8" padding="px-5">
+        <SettingRow icon={User} label="Thông tin cá nhân" />
+        <Divider />
+        <SettingRow icon={ShieldCheck} label="Bảo mật & Quyền riêng tư" />
+        <Divider />
+        <SettingRow icon={Bell} label="Thông báo" value="Đang bật" />
+      </GlassCard>
+
+      <GlassText variant="caption" className="mb-3 ml-1">
+        Ứng dụng
+      </GlassText>
+      <GlassCard intensity={20} className="mb-8" padding="px-5">
+        <SettingRow icon={Smartphone} label="Giao diện" value="Tối" />
+        <Divider />
+        <SettingRow icon={CircleHelp} label="Hỗ trợ & Trợ giúp" />
+      </GlassCard>
+
+      <GlassCard intensity={15} className="mb-6 border-danger/20" padding="px-5">
+        <SettingRow icon={LogOut} label="Đăng xuất" onPress={handleSignOut} destructive />
+      </GlassCard>
+
+      <View className="mt-4 items-center">
+        <GlassText variant="caption" className="text-[10px] opacity-40">
+          EASY SPLIT V1.0.0
         </GlassText>
       </View>
-      <View className="flex-row items-center">
-        {value && (
-          <GlassText variant="caption" className="mr-3 opacity-40">
-            {value}
-          </GlassText>
-        )}
-        <ChevronRight size={18} color="rgba(30, 27, 75, 0.3)" />
-      </View>
-    </TouchableOpacity>
-  );
-
-  return (
-    <SafeAreaView className="flex-1" edges={['top']}>
-      <GlassHeader title="Cài đặt" />
-
-      <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
-        <View className="pt-2 pb-32">
-          {/* Profile Header */}
-          <GlassCard intensity={30} className="mb-8 p-6 flex-row items-center border-indigo-950/10">
-            <View className="w-16 h-16 rounded-full bg-sunrise-orange/20 items-center justify-center mr-5 border-2 border-sunrise-orange/30">
-              <User size={32} color="#FF512F" />
-            </View>
-            <View className="flex-1">
-              <GlassText variant="h3">{user?.user_metadata?.full_name || 'Người dùng'}</GlassText>
-              <GlassText variant="caption" className="opacity-50 mt-0.5">
-                {user?.email}
-              </GlassText>
-            </View>
-          </GlassCard>
-
-          {/* Account Section */}
-          <GlassText variant="caption" className="mb-3 ml-1 uppercase tracking-widest opacity-40">Tài khoản</GlassText>
-          <GlassCard intensity={20} className="mb-8 p-0 px-5 border-indigo-950/10">
-            <SettingItem icon={User} label="Thông tin cá nhân" />
-            <View className="h-[1px] bg-indigo-950/5" />
-            <SettingItem icon={ShieldCheck} label="Bảo mật & Quyền riêng tư" />
-            <View className="h-[1px] bg-indigo-950/5" />
-            <SettingItem icon={Bell} label="Thông báo" value="Đang bật" />
-          </GlassCard>
-
-          {/* App Section */}
-          <GlassText variant="caption" className="mb-3 ml-1 uppercase tracking-widest opacity-40">Ứng dụng</GlassText>
-          <GlassCard intensity={20} className="mb-8 p-0 px-5 border-indigo-950/10">
-            <SettingItem icon={Smartphone} label="Giao diện" value="Tối" />
-            <View className="h-[1px] bg-indigo-950/5" />
-            <SettingItem icon={CircleHelp} label="Hỗ trợ & Trợ giúp" />
-          </GlassCard>
-
-          {/* Danger Zone */}
-          <GlassCard intensity={15} className="mb-6 p-0 px-5 border-rose-400/20">
-            <SettingItem icon={LogOut} label="Đăng xuất" onPress={handleSignOut} isDestructive />
-          </GlassCard>
-          
-          <View className="items-center mt-4">
-            <GlassText variant="caption" className="opacity-20 text-[10px]">EASY SPLIT V1.0.0</GlassText>
-          </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+    </Screen>
   );
 }

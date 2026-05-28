@@ -1,20 +1,21 @@
 import React, { useCallback } from 'react';
-import {
-  View,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  RefreshControl,
-  TextInput,
-} from 'react-native';
+import { View, ScrollView, RefreshControl } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Plus, UserPlus, Users, ChevronRight, Search, Users2 } from 'lucide-react-native';
+import { Plus, UserPlus, Users, Search, Users2 } from 'lucide-react-native';
 import { useGroupList } from '../../src/hooks/useGroupList';
-import { GlassCard } from '../../src/components/ui/GlassCard';
-import { GlassText } from '../../src/components/ui/GlassText';
-import { SunriseButton } from '../../src/components/ui/SunriseButton';
-import { GlassHeader } from '../../src/components/ui/GlassHeader';
+import { colors } from '../../src/theme';
+import {
+  GlassText,
+  GlassHeader,
+  Input,
+  Button,
+  IconButton,
+  EmptyState,
+  ListItem,
+  Badge,
+  Loader,
+} from '../../src/components/ui';
 
 export default function GroupsScreen() {
   const router = useRouter();
@@ -33,118 +34,82 @@ export default function GroupsScreen() {
         title="Nhóm của bạn"
         rightElement={
           <View className="flex-row gap-3">
-            <TouchableOpacity
-              onPress={() => router.push('/join-group')}
-              className="w-10 h-10 rounded-xl bg-indigo-950/5 items-center justify-center border border-indigo-950/10 shadow-sm"
-            >
-              <UserPlus size={18} color="#1E1B4B" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => router.push('/create-group')}
-              className="w-10 h-10 rounded-xl bg-indigo-950/5 items-center justify-center border border-indigo-950/10 shadow-sm"
-            >
-              <Plus size={18} color="#1E1B4B" />
-            </TouchableOpacity>
+            <IconButton icon={UserPlus} onPress={() => router.push('/join-group')} />
+            <IconButton icon={Plus} onPress={() => router.push('/create-group')} />
           </View>
         }
       />
 
-      <View className="flex-1">
-        {/* Search Bar Container */}
-        <View className="px-6 mb-6">
-          <View className="flex-row items-center bg-indigo-950/5 rounded-2xl px-5 py-3 border border-indigo-950/10 shadow-sm">
-            <Search size={18} color="rgba(30, 27, 75, 0.4)" />
-            <TextInput
-              placeholder="Tìm kiếm nhóm của bạn..."
-              value={searchQuery}
-              onChangeText={handleSearch}
-              className="flex-1 ml-3 text-indigo-950 font-outfit-medium text-sm"
-              placeholderTextColor="rgba(30, 27, 75, 0.4)"
-            />
-          </View>
-        </View>
+      <View className="mb-6 px-6">
+        <Input
+          icon={Search}
+          placeholder="Tìm kiếm nhóm của bạn..."
+          value={searchQuery}
+          onChangeText={handleSearch}
+        />
+      </View>
 
-        <ScrollView
-          className="flex-1 px-6"
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#FF512F" />
-          }
-        >
-          {loading ? (
-            <ActivityIndicator size="large" color="#FF512F" className="mt-10" />
-          ) : filteredGroups.length === 0 ? (
-            <GlassCard intensity={20} className="mt-4 items-center justify-center py-12 border-dashed border-indigo-950/10">
-              <View className="w-16 h-16 bg-indigo-950/5 rounded-full items-center justify-center mb-6 border border-indigo-950/10">
-                <Users2 size={32} color="rgba(30, 27, 75, 0.4)" />
-              </View>
-              <GlassText variant="h3" className="mb-2 text-center">
-                {searchQuery ? 'Không tìm thấy kết quả' : 'Chưa tham gia nhóm'}
-              </GlassText>
-              <GlassText variant="body" className="text-center opacity-40 px-10">
-                {searchQuery
-                  ? 'Hãy thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc.'
-                  : 'Hãy tạo nhóm đầu tiên hoặc tham gia cùng bạn bè.'}
-              </GlassText>
-
-              {!searchQuery && (
-                <View className="flex-row gap-4 mt-10 w-full px-4">
-                  <SunriseButton
+      <ScrollView
+        className="flex-1 px-6"
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+        }
+      >
+        {loading ? (
+          <Loader className="mt-10" />
+        ) : filteredGroups.length === 0 ? (
+          <EmptyState
+            icon={Users2}
+            title={searchQuery ? 'Không tìm thấy kết quả' : 'Chưa tham gia nhóm'}
+            description={
+              searchQuery
+                ? 'Hãy thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc.'
+                : 'Hãy tạo nhóm đầu tiên hoặc tham gia cùng bạn bè.'
+            }
+            className="mt-4"
+            action={
+              searchQuery ? undefined : (
+                <View className="flex-row gap-4">
+                  <Button
                     title="Tạo mới"
                     className="flex-1"
                     onPress={() => router.push('/create-group')}
                   />
-                  <SunriseButton
+                  <Button
                     title="Tham gia"
                     variant="secondary"
                     className="flex-1"
                     onPress={() => router.push('/join-group')}
                   />
                 </View>
-              )}
-            </GlassCard>
-          ) : (
-            <View className="pb-32">
-              {filteredGroups.map((item) => (
-                <TouchableOpacity
-                  key={item.group_id}
-                  onPress={() => router.push(`/group/${item.group_id}`)}
-                  activeOpacity={0.8}
-                >
-                  <GlassCard
-                    intensity={25}
-                    className="mb-4 p-5 flex-row items-center border-indigo-950/10"
-                  >
-                    <View className="w-14 h-14 bg-indigo-950/5 rounded-2xl items-center justify-center mr-4 border border-indigo-950/10">
-                      <Users size={24} color="#1E1B4B" />
-                    </View>
-
-                    <View className="flex-1">
-                      <GlassText className="text-lg font-outfit-bold mb-1" numberOfLines={1}>
-                        {item.group_name}
+              )
+            }
+          />
+        ) : (
+          <View className="pb-32">
+            {filteredGroups.map((item) => (
+              <ListItem
+                key={item.group_id}
+                icon={Users}
+                title={item.group_name}
+                onPress={() => router.push(`/group/${item.group_id}`)}
+                className="mb-4"
+                subtitle={
+                  <View className="mt-1 flex-row items-center">
+                    <Badge label={`${item.member_count} thành viên`} tone="accent" />
+                    {item.description ? (
+                      <GlassText variant="caption" className="ml-3 flex-1" numberOfLines={1}>
+                        {item.description}
                       </GlassText>
-                      <View className="flex-row items-center">
-                        <View className="bg-sunrise-orange/10 px-2 py-0.5 rounded-md mr-3 border border-sunrise-orange/20">
-                          <GlassText className="text-[9px] uppercase font-outfit-bold tracking-tight text-sunrise-orange">
-                            {item.member_count} thành viên
-                          </GlassText>
-                        </View>
-                        {item.description && (
-                          <GlassText variant="caption" className="opacity-40 flex-1" numberOfLines={1}>
-                            {item.description}
-                          </GlassText>
-                        )}
-                      </View>
-                    </View>
-
-                    <ChevronRight size={18} color="rgba(30, 27, 75, 0.3)" />
-                  </GlassCard>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </ScrollView>
-      </View>
+                    ) : null}
+                  </View>
+                }
+              />
+            ))}
+          </View>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 }

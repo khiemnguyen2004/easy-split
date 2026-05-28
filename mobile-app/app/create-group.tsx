@@ -1,22 +1,12 @@
 import React, { useState } from 'react';
-import {
-  View,
-  TextInput,
-  TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import { View, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Users, FileText, Copy, Check, Wallet } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useCreateGroup } from '../src/hooks/useCreateGroup';
-import { GlassCard } from '../src/components/ui/GlassCard';
-import { GlassText } from '../src/components/ui/GlassText';
-import { SunriseButton } from '../src/components/ui/SunriseButton';
-import { GlassHeader } from '../src/components/ui/GlassHeader';
+import { colors } from '../src/theme';
+import { GlassCard, GlassText, GlassHeader, Input, Button } from '../src/components/ui';
 
 export default function CreateGroupScreen() {
   const router = useRouter();
@@ -42,41 +32,51 @@ export default function CreateGroupScreen() {
   if (inviteCode) {
     return (
       <SafeAreaView className="flex-1" edges={['top']}>
-        <View className="flex-1 px-6 justify-center items-center">
-          <View className="w-24 h-24 bg-emerald-400/20 rounded-[32px] items-center justify-center mb-8 border border-emerald-400/30 shadow-lg shadow-emerald-400/20">
-            <Check size={48} color="#34D399" />
+        <View className="flex-1 items-center justify-center px-6">
+          <View className="mb-8 h-24 w-24 items-center justify-center rounded-[32px] border border-success/30 bg-success/20 shadow-lg shadow-success/20">
+            <Check size={48} color={colors.success} />
           </View>
 
-          <GlassText variant="h1" className="mb-3 text-center">Tạo nhóm thành công!</GlassText>
-          <GlassText variant="body" className="text-center opacity-60 mb-12 px-6">
+          <GlassText variant="h1" className="mb-3 text-center">
+            Tạo nhóm thành công!
+          </GlassText>
+          <GlassText variant="body" className="mb-12 px-6 text-center text-content-muted">
             Hãy chia sẻ mã mời này với bạn bè để họ có thể tham gia vào nhóm của bạn.
           </GlassText>
 
-          <GlassCard intensity={45} className="w-full p-10 items-center mb-12 border-emerald-400/20">
-            <GlassText variant="caption" className="mb-6 tracking-[4px] uppercase opacity-50">Mã mời của bạn</GlassText>
-            <GlassText className="text-6xl font-outfit-bold text-sunrise-orange tracking-tighter mb-10 shadow-sm">
+          <GlassCard
+            intensity={45}
+            className="mb-12 w-full items-center border-success/20"
+            padding="p-10"
+          >
+            <GlassText variant="caption" className="mb-6 tracking-[4px]">
+              Mã mời của bạn
+            </GlassText>
+            <GlassText className="mb-10 font-outfit-bold text-6xl tracking-tighter text-accent">
               {inviteCode}
             </GlassText>
-            
-            <TouchableOpacity 
+
+            <TouchableOpacity
               onPress={copyToClipboard}
-              className={`flex-row items-center px-6 py-3 rounded-2xl border ${copied ? 'bg-emerald-400/20 border-emerald-400/30' : 'bg-indigo-950/5 border-indigo-950/10'}`}
+              className={`flex-row items-center rounded-2xl border px-6 py-3 ${
+                copied ? 'border-success/30 bg-success/20' : 'border-surface-line bg-surface-fill'
+              }`}
             >
               {copied ? (
                 <>
-                  <Check size={18} color="#34D399" className="mr-2" />
-                  <GlassText className="text-emerald-400 font-outfit-bold">Đã sao chép</GlassText>
+                  <Check size={18} color={colors.success} style={{ marginRight: 8 }} />
+                  <GlassText className="font-outfit-bold text-success">Đã sao chép</GlassText>
                 </>
               ) : (
                 <>
-                  <Copy size={18} color="#1E1B4B" className="mr-2" />
-                  <GlassText className="font-outfit-bold text-indigo-950">Sao chép mã</GlassText>
+                  <Copy size={18} color={colors.content} style={{ marginRight: 8 }} />
+                  <GlassText className="font-outfit-bold">Sao chép mã</GlassText>
                 </>
               )}
             </TouchableOpacity>
           </GlassCard>
 
-          <SunriseButton
+          <Button
             title="Về trang chủ"
             variant="secondary"
             onPress={() => router.push('/(tabs)')}
@@ -90,8 +90,8 @@ export default function CreateGroupScreen() {
   return (
     <SafeAreaView className="flex-1" edges={['top']}>
       <GlassHeader title="Tạo nhóm mới" showBack />
-      
-      <KeyboardAvoidingView 
+
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
@@ -100,75 +100,55 @@ export default function CreateGroupScreen() {
           showsVerticalScrollIndicator={false}
           className="px-6"
         >
-          <View className="pt-4 pb-32">
-            {/* Icon Section */}
-            <View className="items-center mb-10">
-              <View className="w-24 h-24 rounded-[32px] bg-sunrise-orange/10 items-center justify-center border border-sunrise-orange/20 shadow-lg shadow-sunrise-orange/10">
-                <Users size={40} color="#FF512F" />
+          <View className="pb-32 pt-4">
+            <View className="mb-10 items-center">
+              <View className="h-24 w-24 items-center justify-center rounded-[32px] border border-accent/20 bg-accent/10 shadow-lg shadow-accent/10">
+                <Users size={40} color={colors.accent} />
               </View>
             </View>
 
-            {/* Form */}
-            <GlassCard intensity={30} className="mb-10 p-6 space-y-8 gap-8 border-indigo-950/10">
-              <View>
-                <GlassText variant="caption" className="mb-3 ml-1 uppercase tracking-widest opacity-50">Tên nhóm</GlassText>
-                <View className="flex-row items-center bg-indigo-950/5 border border-indigo-950/10 rounded-2xl px-5 py-4 shadow-sm">
-                  <View className="mr-4 opacity-40">
-                    <Users size={20} color="#1E1B4B" />
-                  </View>
-                  <TextInput
-                    placeholder="Ví dụ: Du lịch Đà Lạt, Ăn trưa..."
-                    value={groupName}
-                    onChangeText={setGroupName}
-                    className="flex-1 text-indigo-950 text-base font-outfit-medium"
-                    placeholderTextColor="rgba(30, 27, 75, 0.4)"
-                  />
-                </View>
-              </View>
-
-              <View>
-                <GlassText variant="caption" className="mb-3 ml-1 uppercase tracking-widest opacity-50">Ngân sách (Tùy chọn)</GlassText>
-                <View className="flex-row items-center bg-indigo-950/5 border border-indigo-950/10 rounded-2xl px-5 py-4 shadow-sm">
-                  <View className="mr-4 opacity-40">
-                    <Wallet size={20} color="#1E1B4B" />
-                  </View>
-                  <TextInput
-                    placeholder="Ví dụ: 1.000.000"
-                    value={budgetAmount}
-                    onChangeText={setBudgetAmount}
-                    keyboardType="numeric"
-                    className="flex-1 text-indigo-950 text-base font-outfit-medium"
-                    placeholderTextColor="rgba(30, 27, 75, 0.4)"
-                  />
-                  <View className="bg-indigo-950/10 px-2 py-1 rounded-md border border-indigo-950/10 ml-2">
-                    <GlassText className="opacity-60 text-[10px] font-outfit-bold ml-0 text-indigo-950">VNĐ</GlassText>
-                  </View>
-                </View>
-              </View>
-
-              <View>
-                <GlassText variant="caption" className="mb-3 ml-1 uppercase tracking-widest opacity-50">Mô tả (Tùy chọn)</GlassText>
-                <View className="flex-row items-start bg-indigo-950/5 border border-indigo-950/10 rounded-2xl px-5 py-4 shadow-sm min-h-[120px]">
-                  <View className="mr-4 mt-1 opacity-40">
-                    <FileText size={20} color="#1E1B4B" />
-                  </View>
-                  <TextInput
-                    placeholder="Chia sẻ mục đích của nhóm..."
-                    value={description}
-                    onChangeText={setDescription}
-                    multiline
-                    textAlignVertical="top"
-                    className="flex-1 text-indigo-950 text-base font-outfit-medium pt-0"
-                    placeholderTextColor="rgba(30, 27, 75, 0.4)"
-                  />
-                </View>
+            <GlassCard intensity={30} className="mb-10" padding="p-6">
+              <View className="gap-8">
+                <Input
+                  label="Tên nhóm"
+                  icon={Users}
+                  placeholder="Ví dụ: Du lịch Đà Lạt, Ăn trưa..."
+                  value={groupName}
+                  onChangeText={setGroupName}
+                />
+                <Input
+                  label="Ngân sách (Tùy chọn)"
+                  icon={Wallet}
+                  placeholder="Ví dụ: 1.000.000"
+                  value={budgetAmount}
+                  onChangeText={setBudgetAmount}
+                  keyboardType="numeric"
+                  trailing={
+                    <View className="rounded-md border border-surface-line bg-surface-fill px-2 py-1">
+                      <GlassText className="font-outfit-bold text-[10px] text-content-muted">
+                        VNĐ
+                      </GlassText>
+                    </View>
+                  }
+                />
+                <Input
+                  label="Mô tả (Tùy chọn)"
+                  icon={FileText}
+                  placeholder="Chia sẻ mục đích của nhóm..."
+                  value={description}
+                  onChangeText={setDescription}
+                  multiline
+                  textAlignVertical="top"
+                  className="min-h-[100px]"
+                />
               </View>
             </GlassCard>
 
-            <SunriseButton
-              title={loading ? "Đang xử lý..." : "Tạo nhóm ngay"}
+            <Button
+              title={loading ? 'Đang xử lý...' : 'Tạo nhóm ngay'}
               onPress={handleCreateGroup}
-              disabled={loading || !groupName}
+              loading={loading}
+              disabled={!groupName}
               className="w-full"
             />
           </View>

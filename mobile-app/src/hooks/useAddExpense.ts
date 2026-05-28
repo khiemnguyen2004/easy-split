@@ -55,14 +55,12 @@ export const useAddExpense = (groupId: string) => {
   }, [groupId]);
 
   const togglePlayer = (userId: string) => {
-    setSplitPlayers(prev => 
-      prev.includes(userId) 
-        ? prev.filter(id => id !== userId) 
-        : [...prev, userId]
+    setSplitPlayers((prev) =>
+      prev.includes(userId) ? prev.filter((id) => id !== userId) : [...prev, userId]
     );
   };
 
-  const selectAll = () => setSplitPlayers(members.map(m => m.user_id));
+  const selectAll = () => setSplitPlayers(members.map((m) => m.user_id));
   const deselectAll = () => setSplitPlayers([]);
 
   const addExpense = async () => {
@@ -86,13 +84,15 @@ export const useAddExpense = (groupId: string) => {
       // 1. Create expense
       const { data: expense, error: expError } = await supabase
         .from('expenses')
-        .insert([{
-          group_id: groupId,
-          amount: amountValue,
-          description,
-          payer_id: paidBy,
-          category: 'others' // Default for now
-        }])
+        .insert([
+          {
+            group_id: groupId,
+            amount: amountValue,
+            description,
+            payer_id: paidBy,
+            category: 'others', // Default for now
+          },
+        ])
         .select()
         .single();
 
@@ -100,15 +100,13 @@ export const useAddExpense = (groupId: string) => {
 
       // 2. Create splits
       const shareAmount = amountValue / splitPlayers.length;
-      const splits = splitPlayers.map(userId => ({
+      const splits = splitPlayers.map((userId) => ({
         expense_id: expense.expense_id,
         user_id: userId,
-        share_amount: shareAmount
+        share_amount: shareAmount,
       }));
 
-      const { error: splitError } = await supabase
-        .from('expense_splits')
-        .insert(splits);
+      const { error: splitError } = await supabase.from('expense_splits').insert(splits);
 
       if (splitError) throw splitError;
 

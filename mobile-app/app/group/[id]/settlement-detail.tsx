@@ -1,30 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  ScrollView,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  Image,
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import {
-  CheckCircle2,
-  Clock,
-  Camera,
-  ChevronRight,
-  ShieldCheck,
-  AlertCircle,
-} from 'lucide-react-native';
+import { View, Alert } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
+import { CheckCircle2, Clock, Camera, ChevronRight, AlertCircle } from 'lucide-react-native';
 import { supabase } from '../../../src/api/supabase';
 import { useAuthStore } from '../../../src/store/useAuthStore';
 import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
-import { GlassCard } from '../../../src/components/ui/GlassCard';
-import { GlassText } from '../../../src/components/ui/GlassText';
-import { SunriseButton } from '../../../src/components/ui/SunriseButton';
-import { GlassHeader } from '../../../src/components/ui/GlassHeader';
+import { colors } from '../../../src/theme';
+import { Screen, GlassCard, GlassText, Button, Loader } from '../../../src/components/ui';
 
 interface SimplifiedDebt {
   from_id: string;
@@ -36,7 +19,6 @@ interface SimplifiedDebt {
 
 export default function SettlementDetailScreen() {
   const { id } = useLocalSearchParams();
-  const router = useRouter();
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [debts, setDebts] = useState<SimplifiedDebt[]>([]);
@@ -53,7 +35,6 @@ export default function SettlementDetailScreen() {
     try {
       const groupId = Array.isArray(id) ? id[0] : id;
 
-      // 1. Fetch group members
       const { data: members, error: membersError } = await supabase
         .from('group_members')
         .select('user_id, profiles(full_name)')
@@ -61,7 +42,6 @@ export default function SettlementDetailScreen() {
 
       if (membersError) throw membersError;
 
-      // 2. Fetch all splits for this group
       const { data: splits, error: splitsError } = await supabase
         .from('expense_splits')
         .select('*, expenses!inner(group_id, payer_id)')
@@ -69,13 +49,11 @@ export default function SettlementDetailScreen() {
 
       if (splitsError) throw splitsError;
 
-      // 3. Calculate Net Balances
       const balances: Record<string, number> = {};
       members.forEach((m) => {
         balances[m.user_id] = 0;
       });
 
-      // What they paid
       const { data: expenses } = await supabase
         .from('expenses')
         .select('*')
@@ -84,12 +62,10 @@ export default function SettlementDetailScreen() {
         if (exp.payer_id) balances[exp.payer_id] = (balances[exp.payer_id] || 0) + exp.amount;
       });
 
-      // What they owe
       splits.forEach((s) => {
         if (s.user_id) balances[s.user_id] = (balances[s.user_id] || 0) - s.share_amount;
       });
 
-      // 4. Fetch existing settlements to subtract already paid amounts
       const { data: existingSettlements } = await supabase
         .from('debt_settlements')
         .select('*')
@@ -101,9 +77,8 @@ export default function SettlementDetailScreen() {
         if (s.creditor_id) balances[s.creditor_id] = (balances[s.creditor_id] || 0) - s.amount;
       });
 
-      // 5. Simplify Debts Algorithm
       const creditors = members
-        .filter((m) => balances[m.user_id] > 1) // Ignore small rounding errors
+        .filter((m) => balances[m.user_id] > 1)
         .map((m) => ({ id: m.user_id, name: m.profiles?.full_name, balance: balances[m.user_id] }))
         .sort((a, b) => b.balance - a.balance);
 
@@ -131,7 +106,6 @@ export default function SettlementDetailScreen() {
       }
       setDebts(simplified);
 
-      // 6. Fetch pending settlements
       const { data: pending } = await supabase
         .from('debt_settlements')
         .select(
@@ -172,9 +146,7 @@ export default function SettlementDetailScreen() {
 
       const { error: uploadError } = await supabase.storage
         .from('attachments')
-        .upload(filePath, decode(result.assets[0].base64), {
-          contentType: `image/${fileExt}`,
-        });
+        .upload(filePath, decode(result.assets[0].base64), { contentType: `image/${fileExt}` });
 
       if (uploadError) throw uploadError;
 
@@ -220,129 +192,112 @@ export default function SettlementDetailScreen() {
     }
   };
 
-  if (loading) {
-    return (
-      <View className="flex-1 justify-center items-center">
-        <ActivityIndicator color="#FF512F" />
-      </View>
-    );
-  }
+  if (loading) return <Loader fullscreen />;
+
+  const pendingSettlements = settlements.filter((s) => s.status === 'pending');
 
   return (
-    <SafeAreaView className="flex-1" edges={['top']}>
-      <GlassHeader title="Quyết toán nợ" showBack />
+    <Screen title="Quyết toán nợ" showBack contentClassName="px-6 pt-4 pb-32">
+      <GlassText variant="caption" className="mb-4 ml-1 tracking-widest">
+        Các khoản nợ thu gọn
+      </GlassText>
 
-      <ScrollView className="flex-1 px-6" showsVerticalScrollIndicator={false}>
-        <View className="pt-4 pb-32">
-          {/* Summary Debts */}
-          <GlassText variant="caption" className="mb-4 ml-1 uppercase tracking-widest opacity-40">
-            Các khoản nợ thu gọn
-          </GlassText>
-
-          {debts.length === 0 ? (
-            <GlassCard intensity={20} className="p-6 items-center mb-8 border-emerald-400/20">
-              <CheckCircle2 size={32} color="#34D399" />
-              <GlassText className="text-emerald-400 font-outfit-bold mt-2">Mọi người đã hết nợ!</GlassText>
-            </GlassCard>
-          ) : (
-            <View className="mb-8">
-              {debts.map((debt, index) => {
-                const isMyDebt = debt.from_id === user?.id;
-                return (
-                  <GlassCard
-                    key={index}
-                    intensity={20}
-                    className="mb-3 p-5 border-indigo-950/10"
-                  >
-                    <View className="flex-row items-center justify-between mb-4">
-                      <View className="flex-row items-center flex-1">
-                        <GlassText className="font-outfit-bold text-gray-900">{debt.from_name}</GlassText>
-                        <View className="mx-2">
-                          <ChevronRight size={14} color="rgba(30, 27, 75, 0.4)" />
-                        </View>
-                        <GlassText className="font-outfit-bold text-gray-900">{debt.to_name}</GlassText>
-                      </View>
-                      <GlassText variant="h3" className="text-rose-500 text-lg">
-                        {debt.amount.toLocaleString('vi-VN')}đ
-                      </GlassText>
+      {debts.length === 0 ? (
+        <GlassCard intensity={20} className="mb-8 items-center border-success/20" padding="p-6">
+          <CheckCircle2 size={32} color={colors.success} />
+          <GlassText className="mt-2 font-outfit-bold text-success">Mọi người đã hết nợ!</GlassText>
+        </GlassCard>
+      ) : (
+        <View className="mb-8">
+          {debts.map((debt, index) => {
+            const isMyDebt = debt.from_id === user?.id;
+            return (
+              <GlassCard key={index} intensity={20} className="mb-3" padding="p-5">
+                <View className="mb-4 flex-row items-center justify-between">
+                  <View className="flex-1 flex-row items-center">
+                    <GlassText className="font-outfit-bold">{debt.from_name}</GlassText>
+                    <View className="mx-2">
+                      <ChevronRight size={14} color={colors.contentFaint} />
                     </View>
+                    <GlassText className="font-outfit-bold">{debt.to_name}</GlassText>
+                  </View>
+                  <GlassText variant="h3" className="text-lg text-danger">
+                    {debt.amount.toLocaleString('vi-VN')}đ
+                  </GlassText>
+                </View>
 
-                    {isMyDebt && (
-                      <TouchableOpacity
-                        onPress={() => handleUploadProof(debt)}
-                        disabled={submitting}
-                        className="bg-indigo-600 py-3.5 rounded-2xl items-center flex-row justify-center shadow-lg shadow-indigo-600/10"
-                      >
-                        <Camera size={18} color="white" />
-                        <GlassText className="text-white font-outfit-bold ml-2">Gửi bằng chứng trả nợ</GlassText>
-                      </TouchableOpacity>
-                    )}
-                  </GlassCard>
-                );
-              })}
-            </View>
-          )}
-
-          {/* Pending Confirmations */}
-          {settlements.filter((s) => s.status === 'pending').length > 0 && (
-            <View className="mb-10">
-              <GlassText variant="caption" className="mb-4 ml-1 uppercase tracking-widest opacity-40">
-                Chờ xác nhận
-              </GlassText>
-              {settlements
-                .filter((s) => s.status === 'pending')
-                .map((s) => {
-                  const IAmCreditor = s.creditor_id === user?.id;
-                  return (
-                    <View
-                      key={s.settlement_id}
-                      className="bg-amber-500/10 rounded-3xl p-5 mb-4 border border-amber-500/20"
-                    >
-                      <View className="flex-row justify-between items-start mb-4">
-                        <View className="flex-1">
-                          <GlassText className="text-amber-800 font-outfit-bold text-base">
-                            {s.debtor?.full_name} đã trả
-                          </GlassText>
-                          <GlassText className="text-amber-600 text-xs font-outfit">
-                            {s.profiles?.full_name} nhận tiền
-                          </GlassText>
-                        </View>
-                        <GlassText variant="h3" className="text-amber-800 text-lg">
-                          {s.amount.toLocaleString('vi-VN')}đ
-                        </GlassText>
-                      </View>
-
-                      {IAmCreditor ? (
-                        <TouchableOpacity
-                          onPress={() => handleConfirmPay(s.settlement_id)}
-                          disabled={submitting}
-                          className="bg-amber-500 py-3.5 rounded-2xl items-center flex-row justify-center shadow-lg shadow-amber-500/10"
-                        >
-                          <CheckCircle2 size={18} color="white" />
-                          <GlassText className="text-white font-outfit-bold ml-2">Xác nhận đã nhận tiền</GlassText>
-                        </TouchableOpacity>
-                      ) : (
-                        <View className="flex-row items-center bg-white/50 p-3 rounded-2xl">
-                          <Clock size={16} color="#B45309" />
-                          <GlassText className="text-amber-700 text-xs font-outfit-medium ml-2">
-                            Chờ {s.profiles?.full_name} xác nhận...
-                          </GlassText>
-                        </View>
-                      )}
-                    </View>
-                  );
-                })}
-            </View>
-          )}
-
-          <GlassCard intensity={15} className="p-5 flex-row items-start border-indigo-950/5">
-            <AlertCircle size={18} color="rgba(30, 27, 75, 0.4)" />
-            <GlassText className="text-indigo-950/60 text-xs ml-3 flex-1 leading-5">
-              Hệ thống sử dụng thuật toán bù trừ nợ tự động (Netting) để tối thiểu hóa số lần chuyển khoản giữa các thành viên.
-            </GlassText>
-          </GlassCard>
+                {isMyDebt ? (
+                  <Button
+                    title="Gửi bằng chứng trả nợ"
+                    icon={Camera}
+                    onPress={() => handleUploadProof(debt)}
+                    disabled={submitting}
+                    className="py-3"
+                  />
+                ) : null}
+              </GlassCard>
+            );
+          })}
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      )}
+
+      {pendingSettlements.length > 0 ? (
+        <View className="mb-10">
+          <GlassText variant="caption" className="mb-4 ml-1 tracking-widest">
+            Chờ xác nhận
+          </GlassText>
+          {pendingSettlements.map((s) => {
+            const iAmCreditor = s.creditor_id === user?.id;
+            return (
+              <GlassCard
+                key={s.settlement_id}
+                intensity={20}
+                className="mb-4 border-accent/20"
+                padding="p-5"
+              >
+                <View className="mb-4 flex-row items-start justify-between">
+                  <View className="flex-1">
+                    <GlassText className="font-outfit-bold text-base text-accent">
+                      {s.debtor?.full_name} đã trả
+                    </GlassText>
+                    <GlassText className="font-outfit text-xs text-content-muted">
+                      {s.profiles?.full_name} nhận tiền
+                    </GlassText>
+                  </View>
+                  <GlassText variant="h3" className="text-lg text-accent">
+                    {s.amount.toLocaleString('vi-VN')}đ
+                  </GlassText>
+                </View>
+
+                {iAmCreditor ? (
+                  <Button
+                    title="Xác nhận đã nhận tiền"
+                    icon={CheckCircle2}
+                    onPress={() => handleConfirmPay(s.settlement_id)}
+                    disabled={submitting}
+                    className="py-3"
+                  />
+                ) : (
+                  <View className="flex-row items-center rounded-2xl bg-surface-fill p-3">
+                    <Clock size={16} color={colors.accent} />
+                    <GlassText className="ml-2 font-outfit-medium text-xs text-content-muted">
+                      Chờ {s.profiles?.full_name} xác nhận...
+                    </GlassText>
+                  </View>
+                )}
+              </GlassCard>
+            );
+          })}
+        </View>
+      ) : null}
+
+      <GlassCard intensity={15} className="flex-row items-start" padding="p-5">
+        <AlertCircle size={18} color={colors.contentFaint} />
+        <GlassText className="ml-3 flex-1 text-xs leading-5 text-content-muted">
+          Hệ thống sử dụng thuật toán bù trừ nợ tự động (Netting) để tối thiểu hóa số lần chuyển
+          khoản giữa các thành viên.
+        </GlassText>
+      </GlassCard>
+    </Screen>
   );
 }

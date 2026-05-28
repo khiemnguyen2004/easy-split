@@ -10,6 +10,7 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import { useEffect } from 'react';
+import { backgroundGradient } from '../../theme';
 
 const { width, height } = Dimensions.get('window');
 
@@ -44,7 +45,7 @@ export const MeshBackground = ({ children }: { children: React.ReactNode }) => {
     <View className="flex-1 bg-white">
       {/* Base Gradient */}
       <LinearGradient
-        colors={['#FDFCFB', '#E5E5BE']}
+        colors={backgroundGradient}
         style={StyleSheet.absoluteFill}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
