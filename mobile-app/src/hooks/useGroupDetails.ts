@@ -1,32 +1,13 @@
 import { useState, useCallback, useEffect } from 'react';
 import { groupService } from '../services/group.service';
-
-export interface Expense {
-  expense_id: string;
-  amount: number;
-  description: string;
-  title: string | null;
-  category: string | null;
-  category_id: string | null;
-  created_at: string;
-  payer_id: string;
-  profiles: {
-    full_name: string;
-  };
-}
-
-export interface NetBalance {
-  user_id: string;
-  full_name: string;
-  amount: number; // positive = they are owed, negative = they owe
-}
+import type { Group, GroupMember, GroupExpense, NetBalance, Fund } from '../types/models';
 
 export const useGroupDetails = (id: string | string[] | undefined) => {
-  const [group, setGroup] = useState<any>(null);
-  const [members, setMembers] = useState<any[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [group, setGroup] = useState<Group | null>(null);
+  const [members, setMembers] = useState<GroupMember[]>([]);
+  const [expenses, setExpenses] = useState<GroupExpense[]>([]);
   const [netBalances, setNetBalances] = useState<NetBalance[]>([]);
-  const [funds, setFunds] = useState<any[]>([]);
+  const [funds, setFunds] = useState<Fund[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -41,10 +22,10 @@ export const useGroupDetails = (id: string | string[] | undefined) => {
       const data = await groupService.getGroupDashboardData(groupId);
 
       setGroup(data.group);
-      setMembers(data.members || []);
-      setExpenses((data.expenses as any) || []);
-      setNetBalances(data.netBalances || []);
-      setFunds(data.fundings || []);
+      setMembers(data.members);
+      setExpenses(data.expenses);
+      setNetBalances(data.netBalances);
+      setFunds(data.fundings);
     } catch (error) {
       console.error('Error fetching group details:', error);
     } finally {

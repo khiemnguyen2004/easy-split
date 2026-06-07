@@ -14,6 +14,7 @@ import { useTranslation } from 'react-i18next';
 import { Mail, Lock } from 'lucide-react-native';
 import { supabase } from '../../src/api/supabase';
 import { useAuthStore } from '../../src/store/useAuthStore';
+import { getErrorMessage } from '../../src/utils/error';
 import { GlassCard, GlassText, Input, Button } from '../../src/components/ui';
 
 export default function LoginScreen() {
@@ -35,8 +36,8 @@ export default function LoginScreen() {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       if (data.session) setAuth(data.session);
-    } catch (error: any) {
-      Alert.alert(t('auth.login.failed'), error.message || t('common.somethingWrong'));
+    } catch (error) {
+      Alert.alert(t('auth.login.failed'), getErrorMessage(error) || t('common.somethingWrong'));
     } finally {
       setLoading(false);
     }
@@ -51,8 +52,8 @@ export default function LoginScreen() {
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
       if (error) throw error;
       Alert.alert(t('auth.forgotSentTitle'), t('auth.forgotSentMsg'));
-    } catch (error: any) {
-      Alert.alert(t('common.error'), error.message || t('common.somethingWrong'));
+    } catch (error) {
+      Alert.alert(t('common.error'), getErrorMessage(error) || t('common.somethingWrong'));
     }
   };
 

@@ -13,6 +13,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { User, Mail, Lock, ArrowLeft } from 'lucide-react-native';
 import { supabase } from '../../src/api/supabase';
+import { getErrorMessage } from '../../src/utils/error';
 import { GlassCard, GlassText, Input, Button, IconButton } from '../../src/components/ui';
 
 export default function RegisterScreen() {
@@ -48,8 +49,8 @@ export default function RegisterScreen() {
           ]);
         }
       }
-    } catch (error: any) {
-      Alert.alert(t('auth.register.failed'), error.message || t('common.somethingWrong'));
+    } catch (error) {
+      Alert.alert(t('auth.register.failed'), getErrorMessage(error) || t('common.somethingWrong'));
     } finally {
       setLoading(false);
     }

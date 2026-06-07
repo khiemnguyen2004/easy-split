@@ -8,14 +8,20 @@ import { useAuthStore } from '../../../src/store/useAuthStore';
 import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
 import { useThemeColors } from '../../../src/theme';
+import { formatCurrency } from '../../../src/utils/format';
+import { getErrorMessage } from '../../../src/utils/error';
+import type { SimplifiedDebt } from '../../../src/types/models';
 import { Screen, GlassCard, GlassText, Button, Loader } from '../../../src/components/ui';
 
-interface SimplifiedDebt {
-  from_id: string;
-  from_name: string;
-  to_id: string;
-  to_name: string;
+/** A pending settlement with its joined creditor (`profiles`) and `debtor`. */
+interface PendingSettlement {
+  settlement_id: string;
+  creditor_id: string | null;
+  debtor_id: string | null;
   amount: number;
+  status: string | null;
+  profiles?: { full_name: string | null } | null;
+  debtor?: { full_name: string | null } | null;
 }
 
 export default function SettlementDetailScreen() {
@@ -25,7 +31,7 @@ export default function SettlementDetailScreen() {
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [debts, setDebts] = useState<SimplifiedDebt[]>([]);
-  const [settlements, setSettlements] = useState<any[]>([]);
+  const [settlements, setSettlements] = useState<PendingSettlement[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -97,9 +103,9 @@ export default function SettlementDetailScreen() {
         const amount = Math.min(creditors[c].balance, debtors[d].balance);
         simplified.push({
           from_id: debtors[d].id,
-          from_name: debtors[d].name || 'User',
+          from_name: debtors[d].name || t('common.user'),
           to_id: creditors[c].id,
-          to_name: creditors[c].name || 'User',
+          to_name: creditors[c].name || t('common.user'),
           amount: Math.round(amount),
         });
         creditors[c].balance -= amount;
@@ -117,7 +123,7 @@ export default function SettlementDetailScreen() {
         .eq('group_id', groupId)
         .neq('status', 'confirmed');
 
-      setSettlements(pending || []);
+      setSettlements((pending ?? []) as unknown as PendingSettlement[]);
     } catch (error) {
       console.error('Error fetching settlements:', error);
     } finally {
@@ -170,8 +176,8 @@ export default function SettlementDetailScreen() {
 
       Alert.alert(t('common.success'), t('settlement.proofUploaded'));
       fetchData();
-    } catch (error: any) {
-      Alert.alert(t('common.error'), error.message);
+    } catch (error) {
+      Alert.alert(t('common.error'), getErrorMessage(error));
     } finally {
       setSubmitting(false);
     }
@@ -188,8 +194,8 @@ export default function SettlementDetailScreen() {
       if (error) throw error;
       Alert.alert(t('common.success'), t('settlement.confirmedPay'));
       fetchData();
-    } catch (error: any) {
-      Alert.alert(t('common.error'), error.message);
+    } catch (error) {
+      Alert.alert(t('common.error'), getErrorMessage(error));
     } finally {
       setSubmitting(false);
     }
@@ -227,7 +233,7 @@ export default function SettlementDetailScreen() {
                     <GlassText className="font-outfit-bold">{debt.to_name}</GlassText>
                   </View>
                   <GlassText variant="h3" className="text-lg text-danger">
-                    {debt.amount.toLocaleString('vi-VN')}đ
+                    {formatCurrency(debt.amount)}
                   </GlassText>
                 </View>
 
@@ -270,7 +276,7 @@ export default function SettlementDetailScreen() {
                     </GlassText>
                   </View>
                   <GlassText variant="h3" className="text-lg text-accent">
-                    {s.amount.toLocaleString('vi-VN')}đ
+                    {formatCurrency(s.amount)}
                   </GlassText>
                 </View>
 

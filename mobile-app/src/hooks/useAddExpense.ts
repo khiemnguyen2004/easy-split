@@ -2,18 +2,24 @@ import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
 import i18n from '../i18n';
 import { supabase } from '../api/supabase';
-import { groupService } from '../services/group.service';
 import { useRouter } from 'expo-router';
+import { DEFAULT_EXPENSE_CATEGORY } from '../constants';
+import { getErrorMessage } from '../utils/error';
+import { parseAmount } from '../utils/format';
+
+export interface ExpenseMember {
+  user_id: string;
+  full_name: string;
+}
 
 export const useAddExpense = (groupId: string) => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [members, setMembers] = useState<any[]>([]);
+  const [members, setMembers] = useState<ExpenseMember[]>([]);
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [paidBy, setPaidBy] = useState('');
   const [splitPlayers, setSplitPlayers] = useState<string[]>([]);
-  const [activeMembers, setActiveMembers] = useState<any[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -35,10 +41,13 @@ export const useAddExpense = (groupId: string) => {
         if (cancelled) return;
         if (error) throw error;
 
-        const formattedMembers = data.map((m) => ({
-          user_id: m.user_id,
-          full_name: m.profiles?.full_name || i18n.t('common.user'),
-        }));
+        const formattedMembers: ExpenseMember[] = (data ?? []).map((m) => {
+          const profile = Array.isArray(m.profiles) ? m.profiles[0] : m.profiles;
+          return {
+            user_id: m.user_id,
+            full_name: profile?.full_name || i18n.t('common.user'),
+          };
+        });
 
         setMembers(formattedMembers);
         if (formattedMembers.length > 0) {
@@ -64,13 +73,13 @@ export const useAddExpense = (groupId: string) => {
   const selectAll = () => setSplitPlayers(members.map((m) => m.user_id));
   const deselectAll = () => setSplitPlayers([]);
 
-  const addExpense = async (category: string = 'others') => {
+  const addExpense = async (category: string = DEFAULT_EXPENSE_CATEGORY) => {
     if (!description || !amount || !paidBy || splitPlayers.length === 0) {
       Alert.alert(i18n.t('common.error'), i18n.t('addExpense.errIncomplete'));
       return;
     }
 
-    const amountValue = parseFloat(amount);
+    const amountValue = parseAmount(amount);
     if (isNaN(amountValue) || amountValue <= 0) {
       Alert.alert(i18n.t('common.error'), i18n.t('addExpense.errInvalidAmount'));
       return;
@@ -110,9 +119,9 @@ export const useAddExpense = (groupId: string) => {
 
       Alert.alert(i18n.t('common.success'), i18n.t('addExpense.success'));
       router.back();
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error adding expense:', error);
-      Alert.alert(i18n.t('common.error'), error.message || i18n.t('addExpense.errFailed'));
+      Alert.alert(i18n.t('common.error'), getErrorMessage(error) || i18n.t('addExpense.errFailed'));
     } finally {
       setLoading(false);
     }

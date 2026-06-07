@@ -6,6 +6,7 @@ import { BarChart, PieChart } from 'react-native-chart-kit';
 import { TrendingUp, PieChart as PieIcon, BarChart3, Receipt } from 'lucide-react-native';
 import { useGroupDetails } from '../../../src/hooks/useGroupDetails';
 import { useThemeColors } from '../../../src/theme';
+import { formatCurrency, formatFullDate } from '../../../src/utils/format';
 import { Screen, GlassCard, GlassText, ListItem, Loader } from '../../../src/components/ui';
 
 const screenWidth = Dimensions.get('window').width;
@@ -23,7 +24,7 @@ export default function StatsScreen() {
       .filter((exp) => exp.payer_id === member.user_id)
       .reduce((sum, exp) => sum + exp.amount, 0);
     return {
-      name: member.full_name?.split(' ')[0],
+      name: member.full_name?.split(' ')[0] ?? '',
       amount: total,
       color: `#${Math.floor(Math.random() * 16777215).toString(16)}`,
       legendFontColor: colors.contentMuted,
@@ -56,9 +57,7 @@ export default function StatsScreen() {
             {t('stats.totalSpent')}
           </GlassText>
         </View>
-        <GlassText className="font-outfit-bold text-4xl">
-          {totalSpent.toLocaleString('vi-VN')}đ
-        </GlassText>
+        <GlassText className="font-outfit-bold text-4xl">{formatCurrency(totalSpent)}</GlassText>
       </GlassCard>
 
       <View className="mb-8">
@@ -130,8 +129,8 @@ export default function StatsScreen() {
           <ListItem
             key={exp.expense_id}
             intensity={15}
-            title={exp.description}
-            subtitle={new Date(exp.created_at).toLocaleDateString('vi-VN')}
+            title={exp.description || t('expenses.untitled')}
+            subtitle={formatFullDate(exp.created_at)}
             className="mb-3"
             leading={
               <View className="mr-4 h-10 w-10 items-center justify-center rounded-xl border border-surface-line bg-surface-fill">
@@ -141,9 +140,7 @@ export default function StatsScreen() {
               </View>
             }
             trailing={
-              <GlassText className="font-outfit-bold">
-                {exp.amount.toLocaleString('vi-VN')}đ
-              </GlassText>
+              <GlassText className="font-outfit-bold">{formatCurrency(exp.amount)}</GlassText>
             }
           />
         ))}

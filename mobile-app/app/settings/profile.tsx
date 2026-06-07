@@ -6,6 +6,7 @@ import { useAuthStore } from '../../src/store/useAuthStore';
 import { accountService } from '../../src/services/account.service';
 import { supabase } from '../../src/api/supabase';
 import { useThemeColors } from '../../src/theme';
+import { getErrorMessage } from '../../src/utils/error';
 import { Screen, GlassCard, GlassText, Input, Button } from '../../src/components/ui';
 
 export default function ProfileScreen() {
@@ -50,8 +51,8 @@ export default function ProfileScreen() {
       });
       setUser(updatedUser);
       Alert.alert(t('profile.savedTitle'), t('profile.savedMsg'));
-    } catch (error: any) {
-      Alert.alert(t('profile.updateFailed'), error.message ?? t('common.tryAgainLater'));
+    } catch (error) {
+      Alert.alert(t('profile.updateFailed'), getErrorMessage(error) || t('common.tryAgainLater'));
     } finally {
       setSaving(false);
     }

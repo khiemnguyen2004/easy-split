@@ -1,19 +1,7 @@
 import { useState, useCallback } from 'react';
 import { groupService } from '../services/group.service';
 import { useAuthStore } from '../store/useAuthStore';
-
-export interface GroupDebt {
-  group_id: string;
-  group_name: string;
-  /** positive = owed to the user, negative = the user owes. */
-  net: number;
-}
-
-interface DebtTotals {
-  owedToUser: number;
-  userOwes: number;
-  totalBalance: number;
-}
+import type { GroupDebt, DebtTotals } from '../types/models';
 
 /** Global debt overview: per-group net balances + aggregated totals. */
 export const useDebtsOverview = () => {

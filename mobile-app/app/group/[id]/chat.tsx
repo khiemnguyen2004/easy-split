@@ -20,19 +20,10 @@ import { decode } from 'base64-arraybuffer';
 import { BlurView } from 'expo-blur';
 import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../../src/theme';
+import { formatTime } from '../../../src/utils/format';
+import { getErrorMessage } from '../../../src/utils/error';
+import type { ChatMessage } from '../../../src/types/models';
 import { GlassText, IconButton, Avatar, Loader } from '../../../src/components/ui';
-
-interface Message {
-  message_id: string;
-  content: string | null;
-  sender_id: string;
-  created_at: string;
-  profiles: {
-    full_name: string;
-    avatar_url: string | null;
-  };
-  media: any[];
-}
 
 export default function ChatScreen() {
   const { t } = useTranslation();
@@ -40,7 +31,7 @@ export default function ChatScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { user } = useAuthStore();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [inputText, setInputText] = useState('');
   const [images, setImages] = useState<string[]>([]);
@@ -70,7 +61,7 @@ export default function ChatScreen() {
         .order('created_at', { ascending: true });
 
       if (error) throw error;
-      setMessages((data as any[]) || []);
+      setMessages((data ?? []) as unknown as ChatMessage[]);
     } catch (error) {
       console.error('Error fetching messages:', error);
     } finally {
@@ -104,7 +95,7 @@ export default function ChatScreen() {
             .single();
 
           if (data) {
-            setMessages((prev) => [...prev, data as any]);
+            setMessages((prev) => [...prev, data as unknown as ChatMessage]);
             setTimeout(() => flatListRef.current?.scrollToEnd(), 100);
           }
         }
@@ -173,14 +164,14 @@ export default function ChatScreen() {
 
       setInputText('');
       setImages([]);
-    } catch (error: any) {
-      Alert.alert(t('common.error'), error.message);
+    } catch (error) {
+      Alert.alert(t('common.error'), getErrorMessage(error));
     } finally {
       setSubmitting(false);
     }
   };
 
-  const renderMessage = ({ item }: { item: Message }) => {
+  const renderMessage = ({ item }: { item: ChatMessage }) => {
     const isMe = item.sender_id === user?.id;
     return (
       <View className={`mb-5 flex-row ${isMe ? 'justify-end' : 'justify-start'}`}>
@@ -219,10 +210,7 @@ export default function ChatScreen() {
             ) : null}
           </View>
           <GlassText variant="caption" className="mt-1 px-1 opacity-60">
-            {new Date(item.created_at).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
+            {formatTime(item.created_at)}
           </GlassText>
         </View>
       </View>

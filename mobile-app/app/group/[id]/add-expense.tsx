@@ -10,9 +10,12 @@ import {
   Car,
   Coffee,
   MoreHorizontal,
+  LucideIcon,
 } from 'lucide-react-native';
 import { useAddExpense } from '../../../src/hooks/useAddExpense';
 import { useThemeColors } from '../../../src/theme';
+import { EXPENSE_CATEGORY_IDS, ExpenseCategoryId } from '../../../src/constants';
+import { formatAmountInput, parseAmount } from '../../../src/utils/format';
 import {
   Screen,
   GlassCard,
@@ -23,13 +26,14 @@ import {
   Avatar,
 } from '../../../src/components/ui';
 
-const CATEGORIES = [
-  { id: 'food', icon: Utensils },
-  { id: 'coffee', icon: Coffee },
-  { id: 'transport', icon: Car },
-  { id: 'shopping', icon: ShoppingBag },
-  { id: 'others', icon: MoreHorizontal },
-];
+/** Icon per expense category (labels come from i18n `category.<id>`). */
+const CATEGORY_ICONS: Record<ExpenseCategoryId, LucideIcon> = {
+  food: Utensils,
+  coffee: Coffee,
+  transport: Car,
+  shopping: ShoppingBag,
+  others: MoreHorizontal,
+};
 
 export default function AddExpenseScreen() {
   const { t } = useTranslation();
@@ -52,7 +56,7 @@ export default function AddExpenseScreen() {
     addExpense,
   } = useAddExpense(id as string);
 
-  const [category, setCategory] = useState('food');
+  const [category, setCategory] = useState<ExpenseCategoryId>(EXPENSE_CATEGORY_IDS[0]);
 
   return (
     <Screen
@@ -72,7 +76,7 @@ export default function AddExpenseScreen() {
               variant="amount"
               placeholder="0"
               value={amount}
-              onChangeText={setAmount}
+              onChangeText={(v) => setAmount(formatAmountInput(v))}
               suffix={t('common.vnd')}
               autoFocus
             />
@@ -95,13 +99,13 @@ export default function AddExpenseScreen() {
               {t('addExpense.category')}
             </GlassText>
             <View className="flex-row flex-wrap gap-2">
-              {CATEGORIES.map((cat) => (
+              {EXPENSE_CATEGORY_IDS.map((catId) => (
                 <OptionPill
-                  key={cat.id}
-                  label={t(`category.${cat.id}`)}
-                  icon={cat.icon}
-                  selected={category === cat.id}
-                  onPress={() => setCategory(cat.id)}
+                  key={catId}
+                  label={t(`category.${catId}`)}
+                  icon={CATEGORY_ICONS[catId]}
+                  selected={category === catId}
+                  onPress={() => setCategory(catId)}
                 />
               ))}
             </View>
@@ -115,7 +119,7 @@ export default function AddExpenseScreen() {
         </GlassText>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="overflow-visible">
           <View className="flex-row gap-3">
-            {members.map((member: any) => (
+            {members.map((member) => (
               <OptionPill
                 key={member.user_id}
                 label={member.full_name?.split(' ')[0]}
@@ -146,7 +150,7 @@ export default function AddExpenseScreen() {
         </View>
 
         <GlassCard intensity={25} padding="p-2">
-          {members.map((member: any, index: number) => {
+          {members.map((member, index) => {
             const isSelected = splitPlayers.includes(member.user_id);
             return (
               <TouchableOpacity
@@ -179,9 +183,7 @@ export default function AddExpenseScreen() {
       <Button
         title={t('addExpense.save')}
         onPress={() => addExpense(category)}
-        disabled={
-          loading || !amount || parseFloat(amount) <= 0 || !description || splitPlayers.length === 0
-        }
+        disabled={loading || parseAmount(amount) <= 0 || !description || splitPlayers.length === 0}
         className="w-full"
       />
     </Screen>

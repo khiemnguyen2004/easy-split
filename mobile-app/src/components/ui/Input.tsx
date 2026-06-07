@@ -38,17 +38,19 @@ export const Input = ({
 
   if (variant === 'amount') {
     return (
-      <View className={`flex-row items-center justify-center ${containerClassName}`}>
+      <View className={`w-full flex-row items-center justify-center ${containerClassName}`}>
         <TextInput
           keyboardType="numeric"
           placeholderTextColor={colors.placeholder}
-          className={`text-center font-outfit-bold text-5xl text-content ${className}`}
+          numberOfLines={1}
+          // Explicit lineHeight + vertical padding stop the large bold glyphs
+          // from being clipped; flex-shrink keeps long amounts from overflowing.
+          style={{ lineHeight: 48, paddingVertical: 4 }}
+          className={`shrink text-center font-outfit-bold text-4xl text-content ${className}`}
           {...props}
         />
         {suffix ? (
-          <GlassText className="mb-1 ml-3 font-outfit-bold text-2xl text-accent">
-            {suffix}
-          </GlassText>
+          <GlassText className="ml-2 font-outfit-bold text-xl text-accent">{suffix}</GlassText>
         ) : null}
       </View>
     );

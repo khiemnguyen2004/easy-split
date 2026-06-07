@@ -1,5 +1,15 @@
 import i18n from '../i18n';
 import { supabase } from '../api/supabase';
+import type {
+  GroupDashboard,
+  GroupMember,
+  GroupExpense,
+  NetBalance,
+  FeedExpense,
+  GroupDebt,
+  DebtTotals,
+  AppNotification,
+} from '../types/models';
 
 export interface CreateGroupPayload {
   group_name: string;
@@ -8,6 +18,57 @@ export interface CreateGroupPayload {
   created_by: string;
   budget_amount?: number;
 }
+
+/** A profile relation as returned by a Supabase join (object or 1-element array). */
+type JoinedProfile = { full_name: string | null; avatar_url?: string | null };
+type ProfileRel = JoinedProfile | JoinedProfile[] | null | undefined;
+
+type RawMemberRow = { user_id: string; role: string | null; profiles: ProfileRel };
+type RawExpenseRow = {
+  expense_id: string;
+  amount: number;
+  description: string | null;
+  category: string | null;
+  created_at: string | null;
+  payer_id: string | null;
+  profiles: ProfileRel;
+};
+
+/** Normalize a Supabase to-one join (returned as object or 1-element array). */
+const firstOf = <T>(rel: T | T[] | null | undefined): T | null =>
+  Array.isArray(rel) ? (rel[0] ?? null) : (rel ?? null);
+
+const oneProfile = (rel: ProfileRel): JoinedProfile | null => firstOf(rel);
+const profileName = (rel: ProfileRel): string | null => oneProfile(rel)?.full_name ?? null;
+
+type GroupRel = { group_name: string | null } | { group_name: string | null }[] | null;
+
+type RawFeedRow = {
+  expense_id: string;
+  amount: number;
+  description: string | null;
+  category: string | null;
+  created_at: string | null;
+  group_id: string | null;
+  groups: GroupRel;
+  profiles: ProfileRel;
+};
+
+type RawMembershipRow = { group_id: string; groups: GroupRel };
+type RawPaidRow = {
+  group_id: string | null;
+  expense_splits: { user_id: string | null; share_amount: number }[] | null;
+};
+type RawOwesRow = {
+  share_amount: number;
+  expenses: { group_id: string | null } | { group_id: string | null }[] | null;
+};
+type RawSettlementRow = {
+  group_id: string | null;
+  debtor_id: string | null;
+  creditor_id: string | null;
+  amount: number;
+};
 
 export const groupService = {
   /**
@@ -85,7 +146,7 @@ export const groupService = {
 
     if (countsError) throw countsError;
 
-    const groupCounts = (counts || []).reduce((acc: any, curr) => {
+    const groupCounts = (counts || []).reduce<Record<string, number>>((acc, curr) => {
       acc[curr.group_id] = (acc[curr.group_id] || 0) + 1;
       return acc;
     }, {});
@@ -101,7 +162,7 @@ export const groupService = {
   /**
    * Fetch full group details including members, expenses, and net balances.
    */
-  async getGroupDashboardData(groupId: string) {
+  async getGroupDashboardData(groupId: string): Promise<GroupDashboard> {
     // 1. Fetch group basic info
     const { data: groupData, error: groupError } = await supabase
       .from('groups')
@@ -157,12 +218,34 @@ export const groupService = {
 
     if (splitsError) throw splitsError;
 
+    // Normalize the joined rows into the app's flattened shapes. Supabase types
+    // to-one joins loosely, so we narrow via a local raw shape.
+    const rawMembers = (membersData ?? []) as unknown as RawMemberRow[];
+    const members: GroupMember[] = rawMembers.map((m) => ({
+      user_id: m.user_id,
+      role: m.role,
+      full_name: profileName(m.profiles),
+      avatar_url: oneProfile(m.profiles)?.avatar_url ?? null,
+    }));
+
+    const expenses: GroupExpense[] = ((expensesData ?? []) as unknown as RawExpenseRow[]).map(
+      (e) => ({
+        expense_id: e.expense_id,
+        amount: e.amount,
+        description: e.description,
+        category: e.category,
+        created_at: e.created_at,
+        payer_id: e.payer_id,
+        profiles: oneProfile(e.profiles),
+      })
+    );
+
     const userBalances: Record<string, number> = {};
-    membersData?.forEach((m) => {
+    members.forEach((m) => {
       userBalances[m.user_id] = 0;
     });
 
-    expensesData?.forEach((exp) => {
+    expenses.forEach((exp) => {
       if (exp.payer_id) {
         userBalances[exp.payer_id] = (userBalances[exp.payer_id] || 0) + exp.amount;
       }
@@ -174,15 +257,13 @@ export const groupService = {
       }
     });
 
-    const exactBalances =
-      membersData?.map((m) => ({
-        user_id: m.user_id,
-        // @ts-ignore
-        full_name: m.profiles?.full_name || i18n.t('common.user'),
-        exact: userBalances[m.user_id] || 0,
-      })) || [];
+    const exactBalances = members.map((m) => ({
+      user_id: m.user_id,
+      full_name: m.full_name || i18n.t('common.user'),
+      exact: userBalances[m.user_id] || 0,
+    }));
 
-    const finalNetBalances = exactBalances.map((b) => ({
+    const finalNetBalances: NetBalance[] = exactBalances.map((b) => ({
       user_id: b.user_id,
       full_name: b.full_name,
       amount: Math.round(b.exact),
@@ -208,30 +289,19 @@ export const groupService = {
       .eq('group_id', groupId)
       .order('created_at', { ascending: false });
 
-    // Flatten the joined profile so every consumer can read `member.full_name`
-    // / `member.avatar_url` directly (the raw row nests them under `profiles`).
-    const members = (membersData || []).map((m) => ({
-      user_id: m.user_id,
-      role: m.role,
-      // @ts-ignore - `profiles` is a joined relation object
-      full_name: m.profiles?.full_name ?? null,
-      // @ts-ignore
-      avatar_url: m.profiles?.avatar_url ?? null,
-    }));
-
     return {
       group: groupData,
       members,
-      expenses: expensesData,
+      expenses,
       netBalances: finalNetBalances,
-      fundings: fundingsData || [],
+      fundings: fundingsData ?? [],
     };
   },
 
   /**
    * Fetch global total balance details for a specific user across all groups.
    */
-  async getUserDashboardBalances(userId: string) {
+  async getUserDashboardBalances(userId: string): Promise<DebtTotals> {
     // 1. Fetch all expenses paid by user
     const { data: userPaid, error: paidError } = await supabase
       .from('expenses')
@@ -278,7 +348,7 @@ export const groupService = {
     // = Sum of shares of OTHER people in expenses paid by user
     let owed = 0;
     userPaid?.forEach((exp) => {
-      exp.expense_splits?.forEach((split: any) => {
+      exp.expense_splits?.forEach((split) => {
         if (split.user_id !== userId) {
           owed += split.share_amount;
         }
@@ -311,14 +381,14 @@ export const groupService = {
   },
 
   /** The user's in-app notifications (RLS-scoped to the signed-in user). */
-  async getNotifications() {
+  async getNotifications(): Promise<AppNotification[]> {
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
       .order('created_at', { ascending: false })
       .limit(100);
     if (error) throw error;
-    return data || [];
+    return (data ?? []) as unknown as AppNotification[];
   },
 
   /** Count of unread notifications for the signed-in user. */
@@ -344,7 +414,7 @@ export const groupService = {
    * Global expense feed across every group the user belongs to (RLS scopes the
    * rows to the user's groups). Newest first.
    */
-  async getUserExpensesFeed() {
+  async getUserExpensesFeed(): Promise<FeedExpense[]> {
     const { data, error } = await supabase
       .from('expenses')
       .select(
@@ -363,15 +433,16 @@ export const groupService = {
       .limit(100);
 
     if (error) throw error;
-    return (data || []).map((e: any) => ({
+    const rows = (data ?? []) as unknown as RawFeedRow[];
+    return rows.map((e) => ({
       expense_id: e.expense_id,
       amount: e.amount,
       description: e.description,
       category: e.category,
-      created_at: e.created_at,
-      group_id: e.group_id,
-      group_name: e.groups?.group_name ?? '',
-      payer_name: e.profiles?.full_name ?? null,
+      created_at: e.created_at ?? '',
+      group_id: e.group_id ?? '',
+      group_name: firstOf(e.groups)?.group_name ?? '',
+      payer_name: profileName(e.profiles),
     }));
   },
 
@@ -380,7 +451,7 @@ export const groupService = {
    * negative = the user owes). Reuses the same expense/split/settlement math as
    * the per-group dashboard.
    */
-  async getUserDebtsByGroup(userId: string) {
+  async getUserDebtsByGroup(userId: string): Promise<GroupDebt[]> {
     // Groups the user is a member of.
     const { data: memberships, error: mErr } = await supabase
       .from('group_members')
@@ -388,9 +459,9 @@ export const groupService = {
       .eq('user_id', userId);
     if (mErr) throw mErr;
 
-    const groups = (memberships || []).map((m: any) => ({
-      group_id: m.group_id as string,
-      group_name: m.groups?.group_name ?? '',
+    const groups = ((memberships ?? []) as unknown as RawMembershipRow[]).map((m) => ({
+      group_id: m.group_id,
+      group_name: firstOf(m.groups)?.group_name ?? '',
     }));
     if (groups.length === 0) return [];
 
@@ -422,16 +493,19 @@ export const groupService = {
     const net: Record<string, number> = {};
     groupIds.forEach((g) => (net[g] = 0));
 
-    paid?.forEach((exp: any) => {
-      exp.expense_splits?.forEach((s: any) => {
-        if (s.user_id !== userId) net[exp.group_id] = (net[exp.group_id] || 0) + s.share_amount;
+    ((paid ?? []) as unknown as RawPaidRow[]).forEach((exp) => {
+      const gid = exp.group_id;
+      if (!gid) return;
+      exp.expense_splits?.forEach((s) => {
+        if (s.user_id !== userId) net[gid] = (net[gid] || 0) + s.share_amount;
       });
     });
-    owesSplits?.forEach((s: any) => {
-      const gid = s.expenses?.group_id;
+    ((owesSplits ?? []) as unknown as RawOwesRow[]).forEach((s) => {
+      const gid = firstOf(s.expenses)?.group_id;
       if (gid) net[gid] = (net[gid] || 0) - s.share_amount;
     });
-    settlements?.forEach((s: any) => {
+    ((settlements ?? []) as unknown as RawSettlementRow[]).forEach((s) => {
+      if (!s.group_id) return;
       if (s.creditor_id === userId) net[s.group_id] = (net[s.group_id] || 0) - s.amount;
       else if (s.debtor_id === userId) net[s.group_id] = (net[s.group_id] || 0) + s.amount;
     });

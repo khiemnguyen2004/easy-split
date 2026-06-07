@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Receipt } from 'lucide-react-native';
 import { useExpensesFeed } from '../../src/hooks/useExpensesFeed';
 import { useThemeColors } from '../../src/theme';
+import { formatCurrency, formatDate } from '../../src/utils/format';
 import { Screen, GlassText, EmptyState, ListItem, Loader } from '../../src/components/ui';
 
 export default function ExpensesScreen() {
@@ -18,10 +19,6 @@ export default function ExpensesScreen() {
       fetchData();
     }, [fetchData])
   );
-
-  const formatCurrency = (amount: number) => amount.toLocaleString('vi-VN') + 'đ';
-  const formatDate = (d: string) =>
-    new Date(d).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
 
   return (
     <Screen

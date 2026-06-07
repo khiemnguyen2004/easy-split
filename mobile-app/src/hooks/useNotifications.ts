@@ -1,14 +1,8 @@
 import { useState, useCallback } from 'react';
 import { groupService } from '../services/group.service';
+import type { AppNotification } from '../types/models';
 
-export interface AppNotification {
-  notification_id: string;
-  title: string;
-  message: string;
-  data: Record<string, any> | null;
-  is_read: boolean | null;
-  created_at: string | null;
-}
+export type { AppNotification } from '../types/models';
 
 /** In-app notifications list with refresh + mark-all-read. */
 export const useNotifications = () => {

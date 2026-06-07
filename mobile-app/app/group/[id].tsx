@@ -5,6 +5,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../src/api/supabase';
 import { getGroupBgImage } from '../../src/utils/image';
+import { formatCurrency, formatDate, formatNumber, parseAmount } from '../../src/utils/format';
+import { getErrorMessage } from '../../src/utils/error';
+import { EXPENSE_CATEGORY_IDS } from '../../src/constants';
 import {
   Settings,
   Receipt,
@@ -39,9 +42,6 @@ const TABS = [
   { id: 'settlements', labelKey: 'tabSettlements', icon: TrendingUp },
   { id: 'funds', labelKey: 'tabFunds', icon: PiggyBank },
 ] as const;
-
-/** Known expense-category keys that have a localized label under `category.*`. */
-const CATEGORY_KEYS = ['food', 'coffee', 'transport', 'shopping', 'others'];
 
 const BALANCE_TONE = {
   positive: {
@@ -85,10 +85,6 @@ export default function GroupDetailsScreen() {
     }, [fetchData])
   );
 
-  const formatCurrency = (amount: number) => amount.toLocaleString('vi-VN') + 'đ';
-  const formatDate = (dateString: string) =>
-    new Date(dateString).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' });
-
   const copyInviteCode = () => {
     if (group?.invite_code) {
       Clipboard.setString(group.invite_code);
@@ -99,7 +95,7 @@ export default function GroupDetailsScreen() {
 
   const saveBudget = async (value?: string) => {
     const groupId = Array.isArray(id) ? id[0] : id;
-    const parsed = value ? parseFloat(value.replace(/[^0-9.]/g, '')) : 0;
+    const parsed = value ? parseAmount(value) : 0;
     try {
       const { error } = await supabase
         .from('groups')
@@ -107,8 +103,8 @@ export default function GroupDetailsScreen() {
         .eq('group_id', groupId);
       if (error) throw error;
       fetchData();
-    } catch (error: any) {
-      Alert.alert(t('common.error'), error.message || t('common.somethingWrong'));
+    } catch (error) {
+      Alert.alert(t('common.error'), getErrorMessage(error) || t('common.somethingWrong'));
     }
   };
 
@@ -296,14 +292,18 @@ export default function GroupDetailsScreen() {
               <ListItem
                 key={expense.expense_id}
                 icon={Receipt}
-                title={expense.description}
+                title={expense.description || t('expenses.untitled')}
                 subtitle={
                   t('groupDetail.expenseBy', {
                     name: expense.profiles?.full_name?.split(' ')[0],
                     date: formatDate(expense.created_at),
                   }) +
                   (expense.category
-                    ? ` • ${CATEGORY_KEYS.includes(expense.category) ? t(`category.${expense.category}`) : expense.category}`
+                    ? ` • ${
+                        (EXPENSE_CATEGORY_IDS as readonly string[]).includes(expense.category)
+                          ? t(`category.${expense.category}`)
+                          : expense.category
+                      }`
                     : '')
                 }
                 className="mb-4"
@@ -426,7 +426,7 @@ export default function GroupDetailsScreen() {
                         {formatCurrency(current)}
                       </GlassText>
                       <GlassText variant="caption" className="text-[10px]">
-                        {t('fund.target', { amount: target.toLocaleString('vi-VN') })}
+                        {t('fund.target', { amount: formatNumber(target) })}
                       </GlassText>
                     </View>
                   </GlassCard>

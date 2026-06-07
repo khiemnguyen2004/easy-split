@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import i18n from '../i18n';
 import { useAuthStore } from '../store/useAuthStore';
 import { groupService } from '../services/group.service';
+import { getErrorMessage } from '../utils/error';
 import { useRouter } from 'expo-router';
 
 export const useJoinGroup = () => {
@@ -36,9 +37,9 @@ export const useJoinGroup = () => {
         Alert.alert(i18n.t('common.success'), i18n.t('joinGroup.success'));
         router.push(`/(tabs)/groups`);
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error joining group:', error);
-      Alert.alert(i18n.t('common.error'), error.message || i18n.t('joinGroup.errFailed'));
+      Alert.alert(i18n.t('common.error'), getErrorMessage(error) || i18n.t('joinGroup.errFailed'));
     } finally {
       setLoading(false);
     }

@@ -17,6 +17,7 @@ import {
 import { useHomeDashboard } from '../../src/hooks/useHomeDashboard';
 import { groupService } from '../../src/services/group.service';
 import { useThemeColors, accentGradient } from '../../src/theme';
+import { formatCurrency } from '../../src/utils/format';
 import {
   Screen,
   GlassCard,
@@ -69,8 +70,6 @@ export default function HomeScreen() {
       { cancelable: true }
     );
   };
-
-  const formatCurrency = (amount: number) => Math.abs(amount).toLocaleString('vi-VN') + 'đ';
 
   return (
     <Screen
@@ -127,7 +126,7 @@ export default function HomeScreen() {
             </GlassText>
             <GlassText className="font-outfit-bold text-4xl">
               {totalBalance < 0 ? '-' : ''}
-              {formatCurrency(totalBalance)}
+              {formatCurrency(totalBalance, { abs: true })}
             </GlassText>
           </View>
           <View className="rounded-2xl border border-accent/30 bg-accent/20 p-4">
@@ -140,13 +139,13 @@ export default function HomeScreen() {
             icon={ArrowDownLeft}
             tone="success"
             label={t('home.youAreOwed')}
-            value={formatCurrency(owedToUser)}
+            value={formatCurrency(owedToUser, { abs: true })}
           />
           <StatTile
             icon={ArrowUpRight}
             tone="danger"
             label={t('home.youOwe')}
-            value={formatCurrency(userOwes)}
+            value={formatCurrency(userOwes, { abs: true })}
           />
         </View>
       </GlassCard>

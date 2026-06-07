@@ -7,6 +7,7 @@ import { Users, FileText, Copy, Check, Wallet } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useCreateGroup } from '../src/hooks/useCreateGroup';
 import { useThemeColors } from '../src/theme';
+import { formatAmountInput } from '../src/utils/format';
 import { GlassCard, GlassText, GlassHeader, Input, Button } from '../src/components/ui';
 
 export default function CreateGroupScreen() {
@@ -126,7 +127,7 @@ export default function CreateGroupScreen() {
                   icon={Wallet}
                   placeholder={t('createGroup.budgetPlaceholder')}
                   value={budgetAmount}
-                  onChangeText={setBudgetAmount}
+                  onChangeText={(v) => setBudgetAmount(formatAmountInput(v))}
                   keyboardType="numeric"
                   trailing={
                     <View className="rounded-md border border-surface-line bg-surface-fill px-2 py-1">

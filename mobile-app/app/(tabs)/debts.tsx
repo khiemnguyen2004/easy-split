@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Wallet, ArrowDownLeft, ArrowUpRight, Users } from 'lucide-react-native';
 import { useDebtsOverview } from '../../src/hooks/useDebtsOverview';
 import { useThemeColors } from '../../src/theme';
+import { formatCurrency } from '../../src/utils/format';
 import {
   Screen,
   GlassCard,
@@ -27,7 +28,6 @@ export default function DebtsScreen() {
     }, [fetchData])
   );
 
-  const formatCurrency = (amount: number) => Math.abs(amount).toLocaleString('vi-VN') + 'đ';
   const settled = totals.owedToUser === 0 && totals.userOwes === 0 && byGroup.length === 0;
 
   return (
@@ -55,13 +55,13 @@ export default function DebtsScreen() {
                 icon={ArrowDownLeft}
                 tone="success"
                 label={t('debts.owedToYou')}
-                value={formatCurrency(totals.owedToUser)}
+                value={formatCurrency(totals.owedToUser, { abs: true })}
               />
               <StatTile
                 icon={ArrowUpRight}
                 tone="danger"
                 label={t('debts.youOwe')}
-                value={formatCurrency(totals.userOwes)}
+                value={formatCurrency(totals.userOwes, { abs: true })}
               />
             </View>
           </GlassCard>
@@ -93,7 +93,7 @@ export default function DebtsScreen() {
                     className={`text-lg ${positive ? 'text-success' : 'text-danger'}`}
                   >
                     {positive ? '+' : '-'}
-                    {formatCurrency(g.net)}
+                    {formatCurrency(g.net, { abs: true })}
                   </GlassText>
                 }
               />

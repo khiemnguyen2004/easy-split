@@ -3,6 +3,8 @@ import { Alert } from 'react-native';
 import i18n from '../i18n';
 import { useAuthStore } from '../store/useAuthStore';
 import { groupService } from '../services/group.service';
+import { getErrorMessage } from '../utils/error';
+import { parseAmount } from '../utils/format';
 
 export const useCreateGroup = () => {
   const { user } = useAuthStore();
@@ -43,14 +45,17 @@ export const useCreateGroup = () => {
         description: description.trim(),
         invite_code: code,
         created_by: user.id,
-        budget_amount: budgetAmount ? parseFloat(budgetAmount) : undefined,
+        budget_amount: budgetAmount ? parseAmount(budgetAmount) : undefined,
       });
 
       setInviteCode(code);
       return { success: true, code };
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error creating group:', error);
-      Alert.alert(i18n.t('common.error'), error.message || i18n.t('createGroup.errFailed'));
+      Alert.alert(
+        i18n.t('common.error'),
+        getErrorMessage(error) || i18n.t('createGroup.errFailed')
+      );
       return { success: false, error };
     } finally {
       setLoading(false);

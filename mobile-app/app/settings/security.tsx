@@ -5,6 +5,7 @@ import { Lock, KeyRound, Fingerprint, ShieldCheck, LucideIcon } from 'lucide-rea
 import { useThemeColors } from '../../src/theme';
 import { useSecurityStore } from '../../src/store/useSecurityStore';
 import { accountService } from '../../src/services/account.service';
+import { getErrorMessage } from '../../src/utils/error';
 import { Screen, GlassCard, GlassText, Input, Button } from '../../src/components/ui';
 
 interface ToggleRowProps {
@@ -86,8 +87,8 @@ export default function SecurityScreen() {
       setNewPassword('');
       setConfirmPassword('');
       Alert.alert(t('common.success'), t('security.successMsg'));
-    } catch (error: any) {
-      Alert.alert(t('security.failedTitle'), error.message ?? t('common.tryAgainLater'));
+    } catch (error) {
+      Alert.alert(t('security.failedTitle'), getErrorMessage(error) || t('common.tryAgainLater'));
     } finally {
       setSaving(false);
     }

@@ -7,6 +7,7 @@ import { supabase } from '../../../src/api/supabase';
 import { useAuthStore } from '../../../src/store/useAuthStore';
 import { useGroupDetails } from '../../../src/hooks/useGroupDetails';
 import { useThemeColors } from '../../../src/theme';
+import { getErrorMessage } from '../../../src/utils/error';
 import {
   Screen,
   GlassCard,
@@ -60,8 +61,8 @@ export default function MembersScreen() {
                 .eq('user_id', member.user_id);
               if (error) throw error;
               fetchData();
-            } catch (error: any) {
-              Alert.alert(t('common.error'), error.message || t('common.somethingWrong'));
+            } catch (error) {
+              Alert.alert(t('common.error'), getErrorMessage(error) || t('common.somethingWrong'));
             }
           },
         },

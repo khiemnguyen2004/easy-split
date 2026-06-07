@@ -8,6 +8,9 @@ import { useAuthStore } from '../../../src/store/useAuthStore';
 import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
 import { useThemeColors } from '../../../src/theme';
+import { formatNumber, formatAmountInput, parseAmount } from '../../../src/utils/format';
+import { getErrorMessage } from '../../../src/utils/error';
+import type { Fund, FundContribution } from '../../../src/types/models';
 import {
   Screen,
   GlassCard,
@@ -36,8 +39,8 @@ export default function FundManagementScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [funds, setFunds] = useState<any[]>([]);
-  const [contributions, setContributions] = useState<any[]>([]);
+  const [funds, setFunds] = useState<Fund[]>([]);
+  const [contributions, setContributions] = useState<FundContribution[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [fundName, setFundName] = useState('');
   const [targetAmount, setTargetAmount] = useState('');
@@ -74,7 +77,7 @@ export default function FundManagementScreen() {
           .order('created_at', { ascending: false });
 
         if (contribsError) throw contribsError;
-        setContributions(contribs || []);
+        setContributions((contribs ?? []) as unknown as FundContribution[]);
       } else {
         setContributions([]);
       }
@@ -111,7 +114,7 @@ export default function FundManagementScreen() {
       const { error } = await supabase.from('fundings').insert({
         group_id: groupId,
         name: fundName.trim(),
-        target_amount: parseFloat(targetAmount),
+        target_amount: parseAmount(targetAmount),
         status: 'active',
       });
 
@@ -121,15 +124,15 @@ export default function FundManagementScreen() {
       setFundName('');
       setTargetAmount('');
       fetchData();
-    } catch (error: any) {
-      Alert.alert(t('common.error'), error.message);
+    } catch (error) {
+      Alert.alert(t('common.error'), getErrorMessage(error));
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleContribute = async (fundingId: string, amount: string) => {
-    if (!amount || parseFloat(amount) <= 0) {
+    if (parseAmount(amount) <= 0) {
       Alert.alert(t('common.error'), t('fund.errNoAmount'));
       return;
     }
@@ -163,7 +166,7 @@ export default function FundManagementScreen() {
       const { error } = await supabase.from('fund_contributions').insert({
         funding_id: fundingId,
         user_id: user.id,
-        amount: parseFloat(amount),
+        amount: parseAmount(amount),
         proof_img: publicUrl,
         status: 'pending',
       });
@@ -171,8 +174,8 @@ export default function FundManagementScreen() {
       if (error) throw error;
       Alert.alert(t('common.success'), t('fund.contributed'));
       fetchData();
-    } catch (error: any) {
-      Alert.alert(t('common.error'), error.message);
+    } catch (error) {
+      Alert.alert(t('common.error'), getErrorMessage(error));
     } finally {
       setSubmitting(false);
     }
@@ -196,7 +199,7 @@ export default function FundManagementScreen() {
 
   // Admin confirms a pending contribution → mark confirmed and sync the fund's
   // current_amount to the sum of all confirmed contributions.
-  const confirmContribution = async (contrib: any, fundingId: string) => {
+  const confirmContribution = async (contrib: FundContribution, fundingId: string) => {
     setSubmitting(true);
     try {
       const { error } = await supabase
@@ -220,8 +223,8 @@ export default function FundManagementScreen() {
 
       Alert.alert(t('common.success'), t('fund.confirmedContribution'));
       fetchData();
-    } catch (error: any) {
-      Alert.alert(t('common.error'), error.message);
+    } catch (error) {
+      Alert.alert(t('common.error'), getErrorMessage(error));
     } finally {
       setSubmitting(false);
     }
@@ -256,7 +259,7 @@ export default function FundManagementScreen() {
               placeholder={t('fund.targetPlaceholder')}
               keyboardType="numeric"
               value={targetAmount}
-              onChangeText={setTargetAmount}
+              onChangeText={(v) => setTargetAmount(formatAmountInput(v))}
               trailing={<VndChip />}
             />
           </View>
@@ -312,17 +315,17 @@ export default function FundManagementScreen() {
                   <View className="flex-row items-center">
                     <Target size={12} color={colors.contentFaint} />
                     <GlassText variant="caption" className="ml-1 text-[10px]">
-                      {t('fund.target', { amount: Number(fund.target_amount).toLocaleString() })}
+                      {t('fund.target', { amount: formatNumber(Number(fund.target_amount)) })}
                     </GlassText>
                   </View>
                 </View>
-                <Badge label={fund.status} tone="success" />
+                <Badge label={fund.status ?? ''} tone="success" />
               </View>
 
               <ProgressBar progress={progress} tone="success" className="mb-2 h-2.5" />
               <View className="mb-6 flex-row justify-between">
                 <GlassText className="font-outfit-bold text-xs text-success">
-                  {currentAmount.toLocaleString()}đ
+                  {formatNumber(currentAmount)}đ
                 </GlassText>
                 <GlassText className="font-outfit-bold text-xs text-content-muted">
                   {Math.round(progress * 100)}%
@@ -352,7 +355,7 @@ export default function FundManagementScreen() {
                             {c.profiles?.full_name || t('common.user')}
                           </GlassText>
                           <GlassText variant="caption" className="text-[10px]">
-                            {Number(c.amount).toLocaleString()}đ
+                            {formatNumber(Number(c.amount))}đ
                           </GlassText>
                         </View>
 

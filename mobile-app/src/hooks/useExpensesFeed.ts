@@ -1,16 +1,6 @@
 import { useState, useCallback } from 'react';
 import { groupService } from '../services/group.service';
-
-export interface FeedExpense {
-  expense_id: string;
-  amount: number;
-  description: string | null;
-  category: string | null;
-  created_at: string;
-  group_id: string;
-  group_name: string;
-  payer_name: string | null;
-}
+import type { FeedExpense } from '../types/models';
 
 /** Global expense feed across all of the user's groups (RLS-scoped). */
 export const useExpensesFeed = () => {
