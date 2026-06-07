@@ -1,62 +1,58 @@
 import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { Sun, Moon, Smartphone, Check, LucideIcon } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import { useThemeColors } from '../../src/theme';
-import { useThemeStore, ThemeMode } from '../../src/store/useThemeStore';
+import { useLanguageStore } from '../../src/store/useLanguageStore';
+import { Language, LANGUAGES } from '../../src/i18n';
 import { Screen, GlassCard, GlassText } from '../../src/components/ui';
 
-interface ThemeOption {
-  mode: ThemeMode;
-  icon: LucideIcon;
-  /** Translation key suffix under `appearance.*` (e.g. 'light' → labels + 'lightDesc'). */
-  key: string;
+interface LanguageOption {
+  code: Language;
+  /** Endonym (always shown in its own language). */
+  label: string;
+  flag: string;
 }
 
-const THEME_OPTIONS: ThemeOption[] = [
-  { mode: 'light', icon: Sun, key: 'light' },
-  { mode: 'dark', icon: Moon, key: 'dark' },
-  { mode: 'system', icon: Smartphone, key: 'system' },
+const LANGUAGE_OPTIONS: LanguageOption[] = [
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'vi', label: 'Tiếng Việt', flag: '🇻🇳' },
 ];
 
-export default function AppearanceScreen() {
+export default function LanguageScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const { mode: theme, setMode: setTheme } = useThemeStore();
+  const { language, setLanguage } = useLanguageStore();
 
   return (
-    <Screen title={t('appearance.title')} showBack contentClassName="px-6 pt-4 pb-32">
+    <Screen title={t('language.title')} showBack contentClassName="px-6 pt-4 pb-32">
       <GlassText variant="caption" className="mb-3 ml-1">
-        {t('appearance.theme')}
+        {t('language.section')}
       </GlassText>
       <GlassCard intensity={20} className="mb-8" padding="p-3">
-        {THEME_OPTIONS.map((option) => {
-          const selected = theme === option.mode;
-          const Icon = option.icon;
+        {LANGUAGE_OPTIONS.filter((option) => LANGUAGES.includes(option.code)).map((option) => {
+          const selected = language === option.code;
           return (
             <TouchableOpacity
-              key={option.mode}
+              key={option.code}
               activeOpacity={0.7}
-              onPress={() => setTheme(option.mode)}
-              className={`flex-row items-center rounded-2xl border p-4 ${
+              onPress={() => setLanguage(option.code)}
+              className={`mb-1 flex-row items-center rounded-2xl border p-4 ${
                 selected ? 'border-accent/30 bg-accent/20' : 'border-transparent'
-              } mb-1`}
+              }`}
             >
               <View
                 className={`mr-4 h-11 w-11 items-center justify-center rounded-xl ${
                   selected ? 'bg-accent/20' : 'border border-surface-line bg-surface-fill'
                 }`}
               >
-                <Icon size={20} color={selected ? colors.accent : colors.content} />
+                <GlassText className="text-xl">{option.flag}</GlassText>
               </View>
               <View className="flex-1">
                 <GlassText
                   className={`font-outfit-medium text-base ${selected ? 'text-accent' : ''}`}
                 >
-                  {t(`appearance.${option.key}`)}
-                </GlassText>
-                <GlassText variant="caption" className="mt-0.5 normal-case">
-                  {t(`appearance.${option.key}Desc`)}
+                  {option.label}
                 </GlassText>
               </View>
               {selected ? (
@@ -71,7 +67,7 @@ export default function AppearanceScreen() {
 
       <GlassCard intensity={15} padding="p-6">
         <GlassText variant="caption" className="normal-case leading-5">
-          {t('appearance.note')}
+          {t('language.note')}
         </GlassText>
       </GlassCard>
     </Screen>

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { Users, FileText, Copy, Check, Wallet } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useCreateGroup } from '../src/hooks/useCreateGroup';
@@ -9,6 +10,7 @@ import { useThemeColors } from '../src/theme';
 import { GlassCard, GlassText, GlassHeader, Input, Button } from '../src/components/ui';
 
 export default function CreateGroupScreen() {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const router = useRouter();
   const [groupName, setGroupName] = useState('');
@@ -39,10 +41,10 @@ export default function CreateGroupScreen() {
           </View>
 
           <GlassText variant="h1" className="mb-3 text-center">
-            Tạo nhóm thành công!
+            {t('createGroup.successTitle')}
           </GlassText>
           <GlassText variant="body" className="mb-12 px-6 text-center text-content-muted">
-            Hãy chia sẻ mã mời này với bạn bè để họ có thể tham gia vào nhóm của bạn.
+            {t('createGroup.successDesc')}
           </GlassText>
 
           <GlassCard
@@ -51,7 +53,7 @@ export default function CreateGroupScreen() {
             padding="p-10"
           >
             <GlassText variant="caption" className="mb-6 tracking-[4px]">
-              Mã mời của bạn
+              {t('createGroup.yourInviteCode')}
             </GlassText>
             <GlassText className="mb-10 font-outfit-bold text-6xl tracking-tighter text-accent">
               {inviteCode}
@@ -66,19 +68,21 @@ export default function CreateGroupScreen() {
               {copied ? (
                 <>
                   <Check size={18} color={colors.success} style={{ marginRight: 8 }} />
-                  <GlassText className="font-outfit-bold text-success">Đã sao chép</GlassText>
+                  <GlassText className="font-outfit-bold text-success">
+                    {t('createGroup.copied')}
+                  </GlassText>
                 </>
               ) : (
                 <>
                   <Copy size={18} color={colors.content} style={{ marginRight: 8 }} />
-                  <GlassText className="font-outfit-bold">Sao chép mã</GlassText>
+                  <GlassText className="font-outfit-bold">{t('createGroup.copyCode')}</GlassText>
                 </>
               )}
             </TouchableOpacity>
           </GlassCard>
 
           <Button
-            title="Về trang chủ"
+            title={t('createGroup.backHome')}
             variant="secondary"
             onPress={() => router.push('/(tabs)')}
             className="w-full"
@@ -90,7 +94,7 @@ export default function CreateGroupScreen() {
 
   return (
     <SafeAreaView className="flex-1" edges={['top']}>
-      <GlassHeader title="Tạo nhóm mới" showBack />
+      <GlassHeader title={t('createGroup.title')} showBack />
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -111,31 +115,31 @@ export default function CreateGroupScreen() {
             <GlassCard intensity={30} className="mb-10" padding="p-6">
               <View className="gap-8">
                 <Input
-                  label="Tên nhóm"
+                  label={t('createGroup.nameLabel')}
                   icon={Users}
-                  placeholder="Ví dụ: Du lịch Đà Lạt, Ăn trưa..."
+                  placeholder={t('createGroup.namePlaceholder')}
                   value={groupName}
                   onChangeText={setGroupName}
                 />
                 <Input
-                  label="Ngân sách (Tùy chọn)"
+                  label={t('createGroup.budgetLabel')}
                   icon={Wallet}
-                  placeholder="Ví dụ: 1.000.000"
+                  placeholder={t('createGroup.budgetPlaceholder')}
                   value={budgetAmount}
                   onChangeText={setBudgetAmount}
                   keyboardType="numeric"
                   trailing={
                     <View className="rounded-md border border-surface-line bg-surface-fill px-2 py-1">
                       <GlassText className="font-outfit-bold text-[10px] text-content-muted">
-                        VNĐ
+                        {t('common.vnd')}
                       </GlassText>
                     </View>
                   }
                 />
                 <Input
-                  label="Mô tả (Tùy chọn)"
+                  label={t('createGroup.descLabel')}
                   icon={FileText}
-                  placeholder="Chia sẻ mục đích của nhóm..."
+                  placeholder={t('createGroup.descPlaceholder')}
                   value={description}
                   onChangeText={setDescription}
                   multiline
@@ -146,7 +150,7 @@ export default function CreateGroupScreen() {
             </GlassCard>
 
             <Button
-              title={loading ? 'Đang xử lý...' : 'Tạo nhóm ngay'}
+              title={loading ? t('common.processing') : t('createGroup.submit')}
               onPress={handleCreateGroup}
               loading={loading}
               disabled={!groupName}

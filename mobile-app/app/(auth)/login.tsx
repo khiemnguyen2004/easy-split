@@ -10,12 +10,14 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { Mail, Lock } from 'lucide-react-native';
 import { supabase } from '../../src/api/supabase';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { GlassCard, GlassText, Input, Button } from '../../src/components/ui';
 
 export default function LoginScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { setAuth } = useAuthStore();
   const [email, setEmail] = useState('');
@@ -24,7 +26,7 @@ export default function LoginScreen() {
 
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Lỗi', 'Vui lòng điền đầy đủ email và mật khẩu.');
+      Alert.alert(t('common.error'), t('auth.login.missingFields'));
       return;
     }
 
@@ -34,7 +36,7 @@ export default function LoginScreen() {
       if (error) throw error;
       if (data.session) setAuth(data.session);
     } catch (error: any) {
-      Alert.alert('Đăng nhập thất bại', error.message || 'Đã có lỗi xảy ra.');
+      Alert.alert(t('auth.login.failed'), error.message || t('common.somethingWrong'));
     } finally {
       setLoading(false);
     }
@@ -63,17 +65,17 @@ export default function LoginScreen() {
 
           <View className="mb-10 items-center">
             <GlassText variant="h1" className="mb-2">
-              Chào mừng trở lại!
+              {t('auth.login.welcomeBack')}
             </GlassText>
             <GlassText variant="body" className="px-4 text-center text-content-muted">
-              Đăng nhập để tiếp tục quản lý các khoản chi tiêu của bạn.
+              {t('auth.login.subtitle')}
             </GlassText>
           </View>
 
           <GlassCard intensity={30} className="mb-8" padding="p-6">
             <View className="gap-6">
               <Input
-                label="Địa chỉ Email"
+                label={t('auth.emailLabel')}
                 icon={Mail}
                 placeholder="email@example.com"
                 value={email}
@@ -82,11 +84,11 @@ export default function LoginScreen() {
                 keyboardType="email-address"
               />
               <Input
-                label="Mật khẩu"
+                label={t('auth.passwordLabel')}
                 labelAccessory={
                   <TouchableOpacity>
                     <GlassText variant="caption" className="font-outfit-bold lowercase text-accent">
-                      Quên?
+                      {t('auth.forgot')}
                     </GlassText>
                   </TouchableOpacity>
                 }
@@ -99,15 +101,20 @@ export default function LoginScreen() {
             </View>
           </GlassCard>
 
-          <Button title="Đăng nhập" onPress={handleLogin} loading={loading} className="mb-8" />
+          <Button
+            title={t('auth.login.button')}
+            onPress={handleLogin}
+            loading={loading}
+            className="mb-8"
+          />
 
           <View className="mt-auto flex-row justify-center py-6">
             <GlassText variant="body" className="text-content-muted">
-              Chưa có tài khoản?{' '}
+              {t('auth.login.noAccount')}
             </GlassText>
             <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
               <GlassText variant="body" className="font-outfit-bold text-accent">
-                Tạo tài khoản mới
+                {t('auth.login.createAccount')}
               </GlassText>
             </TouchableOpacity>
           </View>

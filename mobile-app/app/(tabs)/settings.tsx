@@ -9,10 +9,13 @@ import {
   ChevronRight,
   ShieldCheck,
   Smartphone,
+  Languages,
   LucideIcon,
 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useHomeDashboard } from '../../src/hooks/useHomeDashboard';
-import { useThemeStore, themeLabel } from '../../src/store/useThemeStore';
+import { useThemeStore } from '../../src/store/useThemeStore';
+import { useLanguageStore, languageLabel } from '../../src/store/useLanguageStore';
 import { useThemeColors } from '../../src/theme';
 import { Screen, GlassCard, GlassText } from '../../src/components/ui';
 
@@ -65,26 +68,28 @@ const SettingRow = ({
 const Divider = () => <View className="h-px bg-surface-line" />;
 
 export default function SettingsScreen() {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const { user, signOut } = useHomeDashboard();
   const themeMode = useThemeStore((s) => s.mode);
+  const language = useLanguageStore((s) => s.language);
   const router = useRouter();
 
   const handleSignOut = () => {
-    Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất không?', [
-      { text: 'Hủy', style: 'cancel' },
-      { text: 'Đăng xuất', style: 'destructive', onPress: signOut },
+    Alert.alert(t('common.signOut'), t('common.signOutConfirm'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.signOut'), style: 'destructive', onPress: signOut },
     ]);
   };
 
   return (
-    <Screen title="Cài đặt">
+    <Screen title={t('settings.title')}>
       <GlassCard intensity={30} className="mb-8 flex-row items-center" padding="p-6">
         <View className="mr-5 h-16 w-16 items-center justify-center rounded-full border-2 border-accent/30 bg-accent/20">
           <User size={32} color={colors.accent} />
         </View>
         <View className="flex-1">
-          <GlassText variant="h3">{user?.user_metadata?.full_name || 'Người dùng'}</GlassText>
+          <GlassText variant="h3">{user?.user_metadata?.full_name || t('common.user')}</GlassText>
           <GlassText variant="caption" className="mt-0.5">
             {user?.email}
           </GlassText>
@@ -92,49 +97,56 @@ export default function SettingsScreen() {
       </GlassCard>
 
       <GlassText variant="caption" className="mb-3 ml-1">
-        Tài khoản
+        {t('settings.account')}
       </GlassText>
       <GlassCard intensity={20} className="mb-8" padding="px-5">
         <SettingRow
           icon={User}
-          label="Thông tin cá nhân"
+          label={t('settings.profile')}
           onPress={() => router.push('/settings/profile')}
         />
         <Divider />
         <SettingRow
           icon={ShieldCheck}
-          label="Bảo mật & Quyền riêng tư"
+          label={t('settings.security')}
           onPress={() => router.push('/settings/security')}
         />
         <Divider />
         <SettingRow
           icon={Bell}
-          label="Thông báo"
-          value="Đang bật"
+          label={t('settings.notifications')}
+          value={t('settings.notificationsOn')}
           onPress={() => router.push('/settings/notifications')}
         />
       </GlassCard>
 
       <GlassText variant="caption" className="mb-3 ml-1">
-        Ứng dụng
+        {t('settings.app')}
       </GlassText>
       <GlassCard intensity={20} className="mb-8" padding="px-5">
         <SettingRow
           icon={Smartphone}
-          label="Giao diện"
-          value={themeLabel(themeMode)}
+          label={t('settings.appearance')}
+          value={t(`appearance.${themeMode}`)}
           onPress={() => router.push('/settings/appearance')}
         />
         <Divider />
         <SettingRow
+          icon={Languages}
+          label={t('settings.language')}
+          value={languageLabel(language)}
+          onPress={() => router.push('/settings/language')}
+        />
+        <Divider />
+        <SettingRow
           icon={CircleHelp}
-          label="Hỗ trợ & Trợ giúp"
+          label={t('settings.help')}
           onPress={() => router.push('/settings/help')}
         />
       </GlassCard>
 
       <GlassCard intensity={15} className="mb-6 border-danger/20" padding="px-5">
-        <SettingRow icon={LogOut} label="Đăng xuất" onPress={handleSignOut} destructive />
+        <SettingRow icon={LogOut} label={t('common.signOut')} onPress={handleSignOut} destructive />
       </GlassCard>
 
       <View className="mt-4 items-center">

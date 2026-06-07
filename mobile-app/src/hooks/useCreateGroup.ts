@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Alert } from 'react-native';
+import i18n from '../i18n';
 import { useAuthStore } from '../store/useAuthStore';
 import { groupService } from '../services/group.service';
 
@@ -19,12 +20,12 @@ export const useCreateGroup = () => {
 
   const createGroup = async (groupName: string, description: string, budgetAmount: string) => {
     if (!groupName.trim()) {
-      Alert.alert('Lỗi', 'Vui lòng nhập tên nhóm.');
+      Alert.alert(i18n.t('common.error'), i18n.t('createGroup.errNoName'));
       return;
     }
 
     if (!user) {
-      Alert.alert('Lỗi', 'Bạn cần đăng nhập để tạo nhóm.');
+      Alert.alert(i18n.t('common.error'), i18n.t('createGroup.errNotLoggedIn'));
       return;
     }
 
@@ -49,7 +50,7 @@ export const useCreateGroup = () => {
       return { success: true, code };
     } catch (error: any) {
       console.error('Error creating group:', error);
-      Alert.alert('Lỗi', error.message || 'Không thể tạo nhóm. Vui lòng thử lại.');
+      Alert.alert(i18n.t('common.error'), error.message || i18n.t('createGroup.errFailed'));
       return { success: false, error };
     } finally {
       setLoading(false);

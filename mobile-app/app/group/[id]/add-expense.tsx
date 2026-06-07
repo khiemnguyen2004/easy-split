@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, ScrollView } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import {
   Receipt,
   Check,
@@ -23,14 +24,15 @@ import {
 } from '../../../src/components/ui';
 
 const CATEGORIES = [
-  { id: 'food', label: 'Ăn uống', icon: Utensils },
-  { id: 'coffee', label: 'Cà phê', icon: Coffee },
-  { id: 'transport', label: 'Di chuyển', icon: Car },
-  { id: 'shopping', label: 'Mua sắm', icon: ShoppingBag },
-  { id: 'others', label: 'Khác', icon: MoreHorizontal },
+  { id: 'food', icon: Utensils },
+  { id: 'coffee', icon: Coffee },
+  { id: 'transport', icon: Car },
+  { id: 'shopping', icon: ShoppingBag },
+  { id: 'others', icon: MoreHorizontal },
 ];
 
 export default function AddExpenseScreen() {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const { id } = useLocalSearchParams();
   const router = useRouter();
@@ -54,7 +56,7 @@ export default function AddExpenseScreen() {
 
   return (
     <Screen
-      title="Thêm chi tiêu"
+      title={t('addExpense.title')}
       showBack
       onBack={() => router.back()}
       keyboardAvoiding
@@ -63,7 +65,7 @@ export default function AddExpenseScreen() {
       <View className="mb-10 items-center">
         <View className="w-full items-center rounded-[40px] border border-surface-line bg-surface-fill px-8 py-6 shadow-lg">
           <GlassText variant="caption" className="mb-2 tracking-[4px]">
-            Số tiền chi tiêu
+            {t('addExpense.amountLabel')}
           </GlassText>
           <View className="w-full border-b border-surface-line pb-4">
             <Input
@@ -71,7 +73,7 @@ export default function AddExpenseScreen() {
               placeholder="0"
               value={amount}
               onChangeText={setAmount}
-              suffix="VNĐ"
+              suffix={t('common.vnd')}
               autoFocus
             />
           </View>
@@ -81,22 +83,22 @@ export default function AddExpenseScreen() {
       <GlassCard intensity={30} className="mb-8" padding="p-6">
         <View className="gap-6">
           <Input
-            label="Nội dung chi tiêu"
+            label={t('addExpense.contentLabel')}
             icon={Receipt}
-            placeholder="Ví dụ: Ăn tối, Vé xe..."
+            placeholder={t('addExpense.contentPlaceholder')}
             value={description}
             onChangeText={setDescription}
           />
 
           <View>
             <GlassText variant="caption" className="mb-3 ml-1">
-              Danh mục
+              {t('addExpense.category')}
             </GlassText>
             <View className="flex-row flex-wrap gap-2">
               {CATEGORIES.map((cat) => (
                 <OptionPill
                   key={cat.id}
-                  label={cat.label}
+                  label={t(`category.${cat.id}`)}
                   icon={cat.icon}
                   selected={category === cat.id}
                   onPress={() => setCategory(cat.id)}
@@ -109,7 +111,7 @@ export default function AddExpenseScreen() {
 
       <View className="mb-8">
         <GlassText variant="caption" className="mb-4 ml-1">
-          Người chi trả
+          {t('addExpense.payer')}
         </GlassText>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="overflow-visible">
           <View className="flex-row gap-3">
@@ -128,13 +130,17 @@ export default function AddExpenseScreen() {
 
       <View className="mb-10">
         <View className="mb-4 flex-row items-center justify-between px-1">
-          <GlassText variant="caption">Chia cho ai?</GlassText>
+          <GlassText variant="caption">{t('addExpense.splitWith')}</GlassText>
           <View className="flex-row gap-4">
             <TouchableOpacity onPress={selectAll}>
-              <GlassText className="font-outfit-bold text-xs text-accent">Chọn hết</GlassText>
+              <GlassText className="font-outfit-bold text-xs text-accent">
+                {t('addExpense.selectAll')}
+              </GlassText>
             </TouchableOpacity>
             <TouchableOpacity onPress={deselectAll}>
-              <GlassText className="font-outfit-bold text-xs text-content-muted">Bỏ chọn</GlassText>
+              <GlassText className="font-outfit-bold text-xs text-content-muted">
+                {t('addExpense.deselectAll')}
+              </GlassText>
             </TouchableOpacity>
           </View>
         </View>
@@ -171,7 +177,7 @@ export default function AddExpenseScreen() {
       </View>
 
       <Button
-        title="Lưu chi tiêu"
+        title={t('addExpense.save')}
         onPress={addExpense}
         disabled={
           loading || !amount || parseFloat(amount) <= 0 || !description || splitPlayers.length === 0

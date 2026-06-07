@@ -12,8 +12,10 @@ import {
   Outfit_700Bold,
 } from '@expo-google-fonts/outfit';
 import '../global.css';
+import '../src/i18n';
 import { useProtectedRoute } from '../src/hooks/useProtectedRoute';
 import { useThemeStore } from '../src/store/useThemeStore';
+import { useLanguageStore } from '../src/store/useLanguageStore';
 import { themeVars } from '../src/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cssInterop } from 'nativewind';
@@ -75,6 +77,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     useThemeStore.getState().hydrate();
+    useLanguageStore.getState().hydrate();
   }, []);
 
   useEffect(() => {

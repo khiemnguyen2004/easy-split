@@ -1,4 +1,5 @@
 import { User } from '@supabase/supabase-js';
+import i18n from '../i18n';
 import { supabase } from '../api/supabase';
 
 export interface UpdateProfilePayload {
@@ -21,7 +22,7 @@ export const accountService = {
       error: userError,
     } = await supabase.auth.getUser();
     if (userError) throw userError;
-    if (!user) throw new Error('Bạn cần đăng nhập để cập nhật thông tin.');
+    if (!user) throw new Error(i18n.t('account.errNotLoggedIn'));
 
     const fullName = payload.full_name.trim();
     const phone = payload.phone_number?.trim() ? payload.phone_number.trim() : null;
@@ -53,13 +54,13 @@ export const accountService = {
       error: userError,
     } = await supabase.auth.getUser();
     if (userError) throw userError;
-    if (!user?.email) throw new Error('Không tìm thấy tài khoản hiện tại.');
+    if (!user?.email) throw new Error(i18n.t('account.errNoAccount'));
 
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: user.email,
       password: currentPassword,
     });
-    if (signInError) throw new Error('Mật khẩu hiện tại không đúng.');
+    if (signInError) throw new Error(i18n.t('account.errWrongPassword'));
 
     const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
     if (updateError) throw updateError;

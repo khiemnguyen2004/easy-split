@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Switch } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Bell, Receipt, Wallet, MessageCircle, Clock, Mail, LucideIcon } from 'lucide-react-native';
 import { useThemeColors } from '../../src/theme';
 import { Screen, GlassCard, GlassText } from '../../src/components/ui';
@@ -42,6 +43,7 @@ const ToggleRow = ({ icon: Icon, label, description, value, onValueChange }: Tog
 const Divider = () => <View className="h-px bg-surface-line" />;
 
 export default function NotificationsSettingsScreen() {
+  const { t } = useTranslation();
   const [pushEnabled, setPushEnabled] = useState(true);
   const [expenseAdded, setExpenseAdded] = useState(true);
   const [settlement, setSettlement] = useState(true);
@@ -50,60 +52,60 @@ export default function NotificationsSettingsScreen() {
   const [emailEnabled, setEmailEnabled] = useState(false);
 
   return (
-    <Screen title="Thông báo" showBack contentClassName="px-6 pt-4 pb-32">
+    <Screen title={t('settings.notifications')} showBack contentClassName="px-6 pt-4 pb-32">
       <GlassText variant="caption" className="mb-3 ml-1">
-        Chung
+        {t('notifSettings.general')}
       </GlassText>
       <GlassCard intensity={20} className="mb-8" padding="px-5">
         <ToggleRow
           icon={Bell}
-          label="Thông báo đẩy"
-          description="Bật/tắt toàn bộ thông báo trên thiết bị"
+          label={t('notifSettings.push')}
+          description={t('notifSettings.pushDesc')}
           value={pushEnabled}
           onValueChange={setPushEnabled}
         />
         <Divider />
         <ToggleRow
           icon={Mail}
-          label="Thông báo qua email"
-          description="Nhận tóm tắt hoạt động qua email"
+          label={t('notifSettings.email')}
+          description={t('notifSettings.emailDesc')}
           value={emailEnabled}
           onValueChange={setEmailEnabled}
         />
       </GlassCard>
 
       <GlassText variant="caption" className="mb-3 ml-1">
-        Hoạt động nhóm
+        {t('notifSettings.groupActivity')}
       </GlassText>
       <GlassCard intensity={20} className="mb-8" padding="px-5">
         <ToggleRow
           icon={Receipt}
-          label="Chi tiêu mới"
-          description="Khi có người thêm chi tiêu vào nhóm"
+          label={t('notifSettings.newExpense')}
+          description={t('notifSettings.newExpenseDesc')}
           value={expenseAdded}
           onValueChange={setExpenseAdded}
         />
         <Divider />
         <ToggleRow
           icon={Wallet}
-          label="Thanh toán & Quyết toán"
-          description="Khi có khoản nợ được thanh toán"
+          label={t('notifSettings.settlement')}
+          description={t('notifSettings.settlementDesc')}
           value={settlement}
           onValueChange={setSettlement}
         />
         <Divider />
         <ToggleRow
           icon={MessageCircle}
-          label="Tin nhắn nhóm"
-          description="Khi có tin nhắn mới trong nhóm"
+          label={t('notifSettings.chat')}
+          description={t('notifSettings.chatDesc')}
           value={chat}
           onValueChange={setChat}
         />
         <Divider />
         <ToggleRow
           icon={Clock}
-          label="Nhắc nhở nợ"
-          description="Nhắc bạn về các khoản nợ chưa thanh toán"
+          label={t('notifSettings.reminders')}
+          description={t('notifSettings.remindersDesc')}
           value={reminders}
           onValueChange={setReminders}
         />

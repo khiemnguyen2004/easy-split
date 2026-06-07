@@ -1,3 +1,4 @@
+import i18n from '../i18n';
 import { supabase } from '../api/supabase';
 
 export interface CreateGroupPayload {
@@ -177,7 +178,7 @@ export const groupService = {
       membersData?.map((m) => ({
         user_id: m.user_id,
         // @ts-ignore
-        full_name: m.profiles?.full_name || 'Người dùng',
+        full_name: m.profiles?.full_name || i18n.t('common.user'),
         exact: userBalances[m.user_id] || 0,
       })) || [];
 

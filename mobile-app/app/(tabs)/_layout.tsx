@@ -3,6 +3,7 @@ import { Home, Users, Receipt, Settings, Bell } from 'lucide-react-native';
 import { View, Pressable, Text, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../src/theme';
 import { useThemeStore } from '../../src/store/useThemeStore';
 
@@ -76,6 +77,7 @@ function GlassTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 }
 
 export default function TabLayout() {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const isDark = useThemeStore((s) => s.scheme) === 'dark';
   // The FAB circle is `bg-content`, which is dark in light mode (→ white icon)
@@ -86,14 +88,14 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Tổng quan',
+          title: t('tabs.overview'),
           tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="groups"
         options={{
-          title: 'Nhóm',
+          title: t('tabs.groups'),
           tabBarIcon: ({ color, size }) => <Users size={size} color={color} />,
         }}
       />
@@ -111,14 +113,14 @@ export default function TabLayout() {
       <Tabs.Screen
         name="notifications"
         options={{
-          title: 'Thông báo',
+          title: t('tabs.notifications'),
           tabBarIcon: ({ color, size }) => <Bell size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Cài đặt',
+          title: t('tabs.settings'),
           tabBarIcon: ({ color, size }) => <Settings size={size} color={color} />,
         }}
       />

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Alert } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { CheckCircle2, Clock, Camera, ChevronRight, AlertCircle } from 'lucide-react-native';
 import { supabase } from '../../../src/api/supabase';
 import { useAuthStore } from '../../../src/store/useAuthStore';
@@ -18,6 +19,7 @@ interface SimplifiedDebt {
 }
 
 export default function SettlementDetailScreen() {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const { id } = useLocalSearchParams();
   const { user } = useAuthStore();
@@ -125,7 +127,7 @@ export default function SettlementDetailScreen() {
 
   const handleUploadProof = async (debt: SimplifiedDebt) => {
     if (debt.from_id !== user?.id) {
-      Alert.alert('Thông báo', 'Bạn không phải là người nợ trong giao dịch này.');
+      Alert.alert(t('common.notice'), t('settlement.notDebtor'));
       return;
     }
 
@@ -166,10 +168,10 @@ export default function SettlementDetailScreen() {
 
       if (settlementError) throw settlementError;
 
-      Alert.alert('Thành công', 'Đã tải lên minh chứng. Chờ người nhận xác nhận.');
+      Alert.alert(t('common.success'), t('settlement.proofUploaded'));
       fetchData();
     } catch (error: any) {
-      Alert.alert('Lỗi', error.message);
+      Alert.alert(t('common.error'), error.message);
     } finally {
       setSubmitting(false);
     }
@@ -184,10 +186,10 @@ export default function SettlementDetailScreen() {
         .eq('settlement_id', settlementId);
 
       if (error) throw error;
-      Alert.alert('Thành công', 'Đã xác nhận thanh toán.');
+      Alert.alert(t('common.success'), t('settlement.confirmedPay'));
       fetchData();
     } catch (error: any) {
-      Alert.alert('Lỗi', error.message);
+      Alert.alert(t('common.error'), error.message);
     } finally {
       setSubmitting(false);
     }
@@ -198,15 +200,17 @@ export default function SettlementDetailScreen() {
   const pendingSettlements = settlements.filter((s) => s.status === 'pending');
 
   return (
-    <Screen title="Quyết toán nợ" showBack contentClassName="px-6 pt-4 pb-32">
+    <Screen title={t('settlement.title')} showBack contentClassName="px-6 pt-4 pb-32">
       <GlassText variant="caption" className="mb-4 ml-1 tracking-widest">
-        Các khoản nợ thu gọn
+        {t('settlement.simplifiedDebts')}
       </GlassText>
 
       {debts.length === 0 ? (
         <GlassCard intensity={20} className="mb-8 items-center border-success/20" padding="p-6">
           <CheckCircle2 size={32} color={colors.success} />
-          <GlassText className="mt-2 font-outfit-bold text-success">Mọi người đã hết nợ!</GlassText>
+          <GlassText className="mt-2 font-outfit-bold text-success">
+            {t('settlement.allSettled')}
+          </GlassText>
         </GlassCard>
       ) : (
         <View className="mb-8">
@@ -229,7 +233,7 @@ export default function SettlementDetailScreen() {
 
                 {isMyDebt ? (
                   <Button
-                    title="Gửi bằng chứng trả nợ"
+                    title={t('settlement.sendProof')}
                     icon={Camera}
                     onPress={() => handleUploadProof(debt)}
                     disabled={submitting}
@@ -245,7 +249,7 @@ export default function SettlementDetailScreen() {
       {pendingSettlements.length > 0 ? (
         <View className="mb-10">
           <GlassText variant="caption" className="mb-4 ml-1 tracking-widest">
-            Chờ xác nhận
+            {t('settlement.pendingConfirm')}
           </GlassText>
           {pendingSettlements.map((s) => {
             const iAmCreditor = s.creditor_id === user?.id;
@@ -259,10 +263,10 @@ export default function SettlementDetailScreen() {
                 <View className="mb-4 flex-row items-start justify-between">
                   <View className="flex-1">
                     <GlassText className="font-outfit-bold text-base text-accent">
-                      {s.debtor?.full_name} đã trả
+                      {t('settlement.paidBy', { name: s.debtor?.full_name })}
                     </GlassText>
                     <GlassText className="font-outfit text-xs text-content-muted">
-                      {s.profiles?.full_name} nhận tiền
+                      {t('settlement.receives', { name: s.profiles?.full_name })}
                     </GlassText>
                   </View>
                   <GlassText variant="h3" className="text-lg text-accent">
@@ -272,7 +276,7 @@ export default function SettlementDetailScreen() {
 
                 {iAmCreditor ? (
                   <Button
-                    title="Xác nhận đã nhận tiền"
+                    title={t('settlement.confirmReceived')}
                     icon={CheckCircle2}
                     onPress={() => handleConfirmPay(s.settlement_id)}
                     disabled={submitting}
@@ -282,7 +286,7 @@ export default function SettlementDetailScreen() {
                   <View className="flex-row items-center rounded-2xl bg-surface-fill p-3">
                     <Clock size={16} color={colors.accent} />
                     <GlassText className="ml-2 font-outfit-medium text-xs text-content-muted">
-                      Chờ {s.profiles?.full_name} xác nhận...
+                      {t('settlement.waitingConfirm', { name: s.profiles?.full_name })}
                     </GlassText>
                   </View>
                 )}
@@ -295,8 +299,7 @@ export default function SettlementDetailScreen() {
       <GlassCard intensity={15} className="flex-row items-start" padding="p-5">
         <AlertCircle size={18} color={colors.contentFaint} />
         <GlassText className="ml-3 flex-1 text-xs leading-5 text-content-muted">
-          Hệ thống sử dụng thuật toán bù trừ nợ tự động (Netting) để tối thiểu hóa số lần chuyển
-          khoản giữa các thành viên.
+          {t('settlement.nettingInfo')}
         </GlassText>
       </GlassCard>
     </Screen>

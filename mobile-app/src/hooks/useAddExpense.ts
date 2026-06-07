@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Alert } from 'react-native';
+import i18n from '../i18n';
 import { supabase } from '../api/supabase';
 import { groupService } from '../services/group.service';
 import { useRouter } from 'expo-router';
@@ -36,7 +37,7 @@ export const useAddExpense = (groupId: string) => {
 
         const formattedMembers = data.map((m) => ({
           user_id: m.user_id,
-          full_name: m.profiles?.full_name || 'Người dùng',
+          full_name: m.profiles?.full_name || i18n.t('common.user'),
         }));
 
         setMembers(formattedMembers);
@@ -65,16 +66,13 @@ export const useAddExpense = (groupId: string) => {
 
   const addExpense = async () => {
     if (!description || !amount || !paidBy || splitPlayers.length === 0) {
-      Alert.alert(
-        'Lỗi',
-        'Vui lòng điền đầy đủ thông tin, chọn người trả tiền và ít nhất một người tham gia.'
-      );
+      Alert.alert(i18n.t('common.error'), i18n.t('addExpense.errIncomplete'));
       return;
     }
 
     const amountValue = parseFloat(amount);
     if (isNaN(amountValue) || amountValue <= 0) {
-      Alert.alert('Lỗi', 'Số tiền không hợp lệ.');
+      Alert.alert(i18n.t('common.error'), i18n.t('addExpense.errInvalidAmount'));
       return;
     }
 
@@ -110,11 +108,11 @@ export const useAddExpense = (groupId: string) => {
 
       if (splitError) throw splitError;
 
-      Alert.alert('Thành công', 'Đã thêm chi tiêu mới.');
+      Alert.alert(i18n.t('common.success'), i18n.t('addExpense.success'));
       router.back();
     } catch (error: any) {
       console.error('Error adding expense:', error);
-      Alert.alert('Lỗi', error.message || 'Không thể thêm chi tiêu. Vui lòng thử lại.');
+      Alert.alert(i18n.t('common.error'), error.message || i18n.t('addExpense.errFailed'));
     } finally {
       setLoading(false);
     }

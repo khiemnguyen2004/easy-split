@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, TouchableOpacity, RefreshControl, Clipboard } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { getGroupBgImage } from '../../src/utils/image';
 import {
   Settings,
@@ -31,22 +32,27 @@ import {
 } from '../../src/components/ui';
 
 const TABS = [
-  { id: 'expenses', label: 'Chi tiêu', icon: Receipt },
-  { id: 'settlements', label: 'Khoản nợ', icon: TrendingUp },
-  { id: 'funds', label: 'Quỹ', icon: PiggyBank },
+  { id: 'expenses', labelKey: 'tabExpenses', icon: Receipt },
+  { id: 'settlements', labelKey: 'tabSettlements', icon: TrendingUp },
+  { id: 'funds', labelKey: 'tabFunds', icon: PiggyBank },
 ] as const;
 
 const BALANCE_TONE = {
-  positive: { badge: 'bg-success/20 border-success/20', text: 'text-success', label: 'Được trả' },
-  negative: { badge: 'bg-danger/20 border-danger/20', text: 'text-danger', label: 'Cần trả' },
+  positive: {
+    badge: 'bg-success/20 border-success/20',
+    text: 'text-success',
+    labelKey: 'balanceOwed',
+  },
+  negative: { badge: 'bg-danger/20 border-danger/20', text: 'text-danger', labelKey: 'balanceOwe' },
   zero: {
     badge: 'bg-surface-fill border-surface-line',
     text: 'text-content-faint',
-    label: 'Cân bằng',
+    labelKey: 'balanceEven',
   },
 };
 
 export default function GroupDetailsScreen() {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const { id } = useLocalSearchParams();
   const router = useRouter();
@@ -82,9 +88,9 @@ export default function GroupDetailsScreen() {
     return (
       <SafeAreaView className="flex-1 items-center justify-center px-6">
         <GlassText variant="body" className="mb-6 text-content-muted">
-          Không tìm thấy thông tin nhóm.
+          {t('groupDetail.notFound')}
         </GlassText>
-        <Button title="Quay lại" onPress={() => router.back()} className="w-40" />
+        <Button title={t('common.goBack')} onPress={() => router.back()} className="w-40" />
       </SafeAreaView>
     );
   }
@@ -119,7 +125,7 @@ export default function GroupDetailsScreen() {
         <View className="mb-6 flex-row items-start justify-between">
           <View>
             <GlassText variant="caption" className="mb-2">
-              Tổng chi tiêu nhóm
+              {t('groupDetail.totalGroupExpense')}
             </GlassText>
             <GlassText className="font-outfit-bold text-4xl">
               {formatCurrency(totalGroupExpense)}
@@ -145,7 +151,7 @@ export default function GroupDetailsScreen() {
               ) : null}
             </View>
             <GlassText variant="caption" className="text-[10px]">
-              {members.length} thành viên
+              {t('common.memberCount', { count: members.length })}
             </GlassText>
           </View>
 
@@ -160,7 +166,7 @@ export default function GroupDetailsScreen() {
                 copied ? 'text-success' : 'text-content-muted'
               }`}
             >
-              {copied ? 'Đã chép' : group.invite_code}
+              {copied ? t('groupDetail.copied') : group.invite_code}
             </GlassText>
             {copied ? (
               <Check size={10} color={colors.success} />
@@ -188,7 +194,7 @@ export default function GroupDetailsScreen() {
                   active ? 'text-content' : 'text-content-faint'
                 }`}
               >
-                {tab.label}
+                {t(`groupDetail.${tab.labelKey}`)}
               </GlassText>
             </TouchableOpacity>
           );
@@ -198,17 +204,20 @@ export default function GroupDetailsScreen() {
       {activeTab === 'expenses' ? (
         <View>
           <GlassText variant="h3" className="mb-6">
-            Lịch sử giao dịch
+            {t('groupDetail.transactionHistory')}
           </GlassText>
           {expenses.length === 0 ? (
-            <EmptyState icon={Receipt} title="Chưa có khoản chi nào được ghi lại." />
+            <EmptyState icon={Receipt} title={t('groupDetail.noExpenses')} />
           ) : (
             expenses.map((expense) => (
               <ListItem
                 key={expense.expense_id}
                 icon={Receipt}
                 title={expense.description}
-                subtitle={`Bởi ${expense.profiles?.full_name?.split(' ')[0]} • ${formatDate(expense.created_at)}`}
+                subtitle={t('groupDetail.expenseBy', {
+                  name: expense.profiles?.full_name?.split(' ')[0],
+                  date: formatDate(expense.created_at),
+                })}
                 className="mb-4"
                 trailing={
                   <GlassText variant="h3" className="text-lg">
@@ -224,11 +233,11 @@ export default function GroupDetailsScreen() {
       {activeTab === 'settlements' ? (
         <View>
           <View className="mb-6 flex-row items-center justify-between">
-            <GlassText variant="h3">Tình hình tài chính</GlassText>
+            <GlassText variant="h3">{t('groupDetail.financialStatus')}</GlassText>
             <View className="flex-row items-center rounded-full border border-success/20 bg-success/10 px-3 py-1.5">
               <ShieldCheck size={14} color={colors.success} />
               <GlassText className="ml-1.5 font-outfit-bold text-[10px] uppercase tracking-tighter text-success">
-                Bảo mật nợ
+                {t('groupDetail.debtSecured')}
               </GlassText>
             </View>
           </View>
@@ -257,12 +266,12 @@ export default function GroupDetailsScreen() {
                   </View>
                   <View className="flex-1">
                     <GlassText className="mb-0.5 font-outfit-bold text-base">
-                      {item.full_name} {item.user_id === user?.id ? '(Bạn)' : ''}
+                      {item.full_name} {item.user_id === user?.id ? t('common.you') : ''}
                     </GlassText>
                     <GlassText
                       className={`font-outfit-bold text-[10px] uppercase tracking-widest ${tone.text}`}
                     >
-                      {tone.label}
+                      {t(`groupDetail.${tone.labelKey}`)}
                     </GlassText>
                   </View>
                   <GlassText variant="h3" className={`text-lg ${tone.text}`}>
@@ -275,7 +284,7 @@ export default function GroupDetailsScreen() {
           </GlassCard>
 
           <Button
-            title="Quyết toán ngay"
+            title={t('groupDetail.settleNow')}
             onPress={() => router.push(`/group/${id}/settlement-detail`)}
             className="w-full"
           />
@@ -285,12 +294,12 @@ export default function GroupDetailsScreen() {
       {activeTab === 'funds' ? (
         <View>
           <GlassText variant="h3" className="mb-6">
-            Quỹ chung của nhóm
+            {t('groupDetail.groupFund')}
           </GlassText>
           <EmptyState
             icon={PiggyBank}
-            title="Tính năng sắp ra mắt"
-            description="Quỹ chung sẽ giúp cả nhóm quản lý các khoản chi tiêu định kỳ dễ dàng hơn."
+            title={t('groupDetail.fundComingSoon')}
+            description={t('groupDetail.fundComingSoonDesc')}
           />
         </View>
       ) : null}

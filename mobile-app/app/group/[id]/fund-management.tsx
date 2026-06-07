@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Alert } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Plus, PiggyBank, Target, CheckCircle2 } from 'lucide-react-native';
 import { supabase } from '../../../src/api/supabase';
 import { useAuthStore } from '../../../src/store/useAuthStore';
@@ -28,6 +29,7 @@ const VndChip = () => (
 );
 
 export default function FundManagementScreen() {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const { id } = useLocalSearchParams();
   const { user } = useAuthStore();
@@ -76,7 +78,7 @@ export default function FundManagementScreen() {
 
   const handleCreateFund = async () => {
     if (!fundName.trim() || !targetAmount) {
-      Alert.alert('Lỗi', 'Vui lòng nhập tên quỹ và số tiền mục tiêu.');
+      Alert.alert(t('common.error'), t('fund.errMissing'));
       return;
     }
 
@@ -92,13 +94,13 @@ export default function FundManagementScreen() {
       });
 
       if (error) throw error;
-      Alert.alert('Thành công', 'Đã tạo quỹ mới.');
+      Alert.alert(t('common.success'), t('fund.created'));
       setIsCreating(false);
       setFundName('');
       setTargetAmount('');
       fetchData();
     } catch (error: any) {
-      Alert.alert('Lỗi', error.message);
+      Alert.alert(t('common.error'), error.message);
     } finally {
       setSubmitting(false);
     }
@@ -106,7 +108,7 @@ export default function FundManagementScreen() {
 
   const handleContribute = async (fundingId: string, amount: string) => {
     if (!amount || parseFloat(amount) <= 0) {
-      Alert.alert('Lỗi', 'Vui lòng nhập số tiền đóng góp.');
+      Alert.alert(t('common.error'), t('fund.errNoAmount'));
       return;
     }
 
@@ -145,10 +147,10 @@ export default function FundManagementScreen() {
       });
 
       if (error) throw error;
-      Alert.alert('Thành công', 'Đã gửi đóng góp. Chờ Admin xác nhận.');
+      Alert.alert(t('common.success'), t('fund.contributed'));
       fetchData();
     } catch (error: any) {
-      Alert.alert('Lỗi', error.message);
+      Alert.alert(t('common.error'), error.message);
     } finally {
       setSubmitting(false);
     }
@@ -156,11 +158,14 @@ export default function FundManagementScreen() {
 
   const promptContribute = (fundingId: string) =>
     Alert.prompt(
-      'Đóng góp quỹ',
-      'Nhập số tiền bạn muốn đóng góp',
+      t('fund.promptTitle'),
+      t('fund.promptMsg'),
       [
-        { text: 'Hủy', style: 'cancel' },
-        { text: 'Đóng góp', onPress: (val?: string) => handleContribute(fundingId, val || '0') },
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('fund.contribute'),
+          onPress: (val?: string) => handleContribute(fundingId, val || '0'),
+        },
       ],
       'plain-text',
       '',
@@ -170,23 +175,23 @@ export default function FundManagementScreen() {
   if (loading) return <Loader fullscreen />;
 
   return (
-    <Screen title="Quỹ nhóm" showBack contentClassName="px-6 pt-4 pb-32">
+    <Screen title={t('fund.title')} showBack contentClassName="px-6 pt-4 pb-32">
       {isCreating ? (
         <GlassCard intensity={30} className="mb-8" padding="p-6">
           <GlassText variant="h3" className="mb-6">
-            Tạo quỹ mới
+            {t('fund.createTitle')}
           </GlassText>
 
           <View className="mb-6 gap-6">
             <Input
-              label="Tên quỹ"
-              placeholder="Ví dụ: Quỹ ăn chơi Đà Lạt"
+              label={t('fund.nameLabel')}
+              placeholder={t('fund.namePlaceholder')}
               value={fundName}
               onChangeText={setFundName}
             />
             <Input
-              label="Số tiền mục tiêu"
-              placeholder="Ví dụ: 5.000.000"
+              label={t('fund.targetLabel')}
+              placeholder={t('fund.targetPlaceholder')}
               keyboardType="numeric"
               value={targetAmount}
               onChangeText={setTargetAmount}
@@ -196,13 +201,13 @@ export default function FundManagementScreen() {
 
           <View className="flex-row gap-4">
             <Button
-              title="Hủy"
+              title={t('common.cancel')}
               variant="secondary"
               onPress={() => setIsCreating(false)}
               className="flex-1"
             />
             <Button
-              title="Tạo quỹ"
+              title={t('fund.create')}
               onPress={handleCreateFund}
               loading={submitting}
               className="flex-[2]"
@@ -211,8 +216,8 @@ export default function FundManagementScreen() {
         </GlassCard>
       ) : (
         <ListItem
-          title="Tạo quỹ mới"
-          subtitle="Gom tiền cho mục tiêu chung"
+          title={t('fund.createTitle')}
+          subtitle={t('fund.createSubtitle')}
           onPress={() => setIsCreating(true)}
           className="mb-8"
           leading={
@@ -224,11 +229,11 @@ export default function FundManagementScreen() {
       )}
 
       <GlassText variant="caption" className="mb-4 ml-1 tracking-widest">
-        Các quỹ hiện có
+        {t('fund.existing')}
       </GlassText>
 
       {funds.length === 0 ? (
-        <EmptyState icon={PiggyBank} title="Chưa có quỹ nào trong nhóm" />
+        <EmptyState icon={PiggyBank} title={t('fund.empty')} />
       ) : (
         funds.map((fund) => {
           const fundContribs = contributions.filter((c) => c.funding_id === fund.funding_id);
@@ -242,7 +247,7 @@ export default function FundManagementScreen() {
                   <View className="flex-row items-center">
                     <Target size={12} color={colors.contentFaint} />
                     <GlassText variant="caption" className="ml-1 text-[10px]">
-                      Mục tiêu: {fund.target_amount.toLocaleString()}đ
+                      {t('fund.target', { amount: fund.target_amount.toLocaleString() })}
                     </GlassText>
                   </View>
                 </View>
@@ -278,12 +283,12 @@ export default function FundManagementScreen() {
                   ) : null}
                 </View>
                 <GlassText variant="caption" className="text-[10px] normal-case">
-                  {fundContribs.length} người đã đóng góp
+                  {t('fund.contributorsCount', { count: fundContribs.length })}
                 </GlassText>
               </View>
 
               <Button
-                title="Gửi tiền vào quỹ"
+                title={t('fund.deposit')}
                 icon={CheckCircle2}
                 onPress={() => promptContribute(fund.funding_id)}
                 className="w-full"

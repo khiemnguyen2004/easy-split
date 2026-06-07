@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { View, ScrollView, RefreshControl } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { Plus, UserPlus, Users, Search, Users2 } from 'lucide-react-native';
 import { useGroupList } from '../../src/hooks/useGroupList';
 import { useThemeColors } from '../../src/theme';
@@ -18,6 +19,7 @@ import {
 } from '../../src/components/ui';
 
 export default function GroupsScreen() {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const router = useRouter();
   const { filteredGroups, loading, refreshing, searchQuery, fetchGroups, onRefresh, handleSearch } =
@@ -32,7 +34,7 @@ export default function GroupsScreen() {
   return (
     <SafeAreaView className="flex-1" edges={['top']}>
       <GlassHeader
-        title="Nhóm của bạn"
+        title={t('groups.title')}
         rightElement={
           <View className="flex-row gap-3">
             <IconButton icon={UserPlus} onPress={() => router.push('/join-group')} />
@@ -44,7 +46,7 @@ export default function GroupsScreen() {
       <View className="mb-6 px-6">
         <Input
           icon={Search}
-          placeholder="Tìm kiếm nhóm của bạn..."
+          placeholder={t('groups.searchPlaceholder')}
           value={searchQuery}
           onChangeText={handleSearch}
         />
@@ -62,23 +64,19 @@ export default function GroupsScreen() {
         ) : filteredGroups.length === 0 ? (
           <EmptyState
             icon={Users2}
-            title={searchQuery ? 'Không tìm thấy kết quả' : 'Chưa tham gia nhóm'}
-            description={
-              searchQuery
-                ? 'Hãy thử tìm kiếm với từ khóa khác hoặc xóa bộ lọc.'
-                : 'Hãy tạo nhóm đầu tiên hoặc tham gia cùng bạn bè.'
-            }
+            title={searchQuery ? t('groups.noResultsTitle') : t('groups.emptyTitle')}
+            description={searchQuery ? t('groups.noResultsDesc') : t('groups.emptyDesc')}
             className="mt-4"
             action={
               searchQuery ? undefined : (
                 <View className="flex-row gap-4">
                   <Button
-                    title="Tạo mới"
+                    title={t('groups.create')}
                     className="flex-1"
                     onPress={() => router.push('/create-group')}
                   />
                   <Button
-                    title="Tham gia"
+                    title={t('groups.join')}
                     variant="secondary"
                     className="flex-1"
                     onPress={() => router.push('/join-group')}
@@ -98,7 +96,10 @@ export default function GroupsScreen() {
                 className="mb-4"
                 subtitle={
                   <View className="mt-1 flex-row items-center">
-                    <Badge label={`${item.member_count} thành viên`} tone="accent" />
+                    <Badge
+                      label={t('common.memberCount', { count: item.member_count })}
+                      tone="accent"
+                    />
                     {item.description ? (
                       <GlassText variant="caption" className="ml-3 flex-1" numberOfLines={1}>
                         {item.description}

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Alert } from 'react-native';
+import i18n from '../i18n';
 import { useAuthStore } from '../store/useAuthStore';
 import { groupService } from '../services/group.service';
 import { useRouter } from 'expo-router';
@@ -13,17 +14,17 @@ export const useJoinGroup = () => {
   const joinGroup = async () => {
     const code = inviteCode.trim().toUpperCase();
     if (!code) {
-      Alert.alert('Lỗi', 'Vui lòng nhập mã mời.');
+      Alert.alert(i18n.t('common.error'), i18n.t('joinGroup.errNoCode'));
       return;
     }
 
     if (code.length < 6) {
-      Alert.alert('Lỗi', 'Mã mời phải có đúng 6 ký tự.');
+      Alert.alert(i18n.t('common.error'), i18n.t('joinGroup.errCodeLength'));
       return;
     }
 
     if (!user) {
-      Alert.alert('Lỗi', 'Bạn cần đăng nhập để tham gia nhóm.');
+      Alert.alert(i18n.t('common.error'), i18n.t('joinGroup.errNotLoggedIn'));
       return;
     }
 
@@ -32,12 +33,12 @@ export const useJoinGroup = () => {
     try {
       const groupId = await groupService.joinGroupByCode(code);
       if (groupId) {
-        Alert.alert('Thành công', 'Bạn đã tham gia nhóm thành công!');
+        Alert.alert(i18n.t('common.success'), i18n.t('joinGroup.success'));
         router.push(`/(tabs)/groups`);
       }
     } catch (error: any) {
       console.error('Error joining group:', error);
-      Alert.alert('Lỗi', error.message || 'Không thể tham gia nhóm. Vui lòng thử lại.');
+      Alert.alert(i18n.t('common.error'), error.message || i18n.t('joinGroup.errFailed'));
     } finally {
       setLoading(false);
     }

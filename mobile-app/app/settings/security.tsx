@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Switch, Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Lock, KeyRound, Fingerprint, ShieldCheck, LucideIcon } from 'lucide-react-native';
 import { useThemeColors } from '../../src/theme';
 import { accountService } from '../../src/services/account.service';
@@ -43,6 +44,7 @@ const ToggleRow = ({ icon: Icon, label, description, value, onValueChange }: Tog
 const Divider = () => <View className="h-px bg-surface-line" />;
 
 export default function SecurityScreen() {
+  const { t } = useTranslation();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -53,19 +55,19 @@ export default function SecurityScreen() {
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
-      Alert.alert('Thiếu thông tin', 'Vui lòng điền đầy đủ các trường mật khẩu.');
+      Alert.alert(t('common.missingInfo'), t('security.missingFields'));
       return;
     }
     if (newPassword.length < 6) {
-      Alert.alert('Mật khẩu quá ngắn', 'Mật khẩu mới phải có ít nhất 6 ký tự.');
+      Alert.alert(t('security.tooShortTitle'), t('security.tooShortMsg'));
       return;
     }
     if (newPassword !== confirmPassword) {
-      Alert.alert('Không khớp', 'Mật khẩu xác nhận không khớp với mật khẩu mới.');
+      Alert.alert(t('security.mismatchTitle'), t('security.mismatchMsg'));
       return;
     }
     if (newPassword === currentPassword) {
-      Alert.alert('Trùng mật khẩu', 'Mật khẩu mới phải khác mật khẩu hiện tại.');
+      Alert.alert(t('security.sameTitle'), t('security.sameMsg'));
       return;
     }
     setSaving(true);
@@ -74,9 +76,9 @@ export default function SecurityScreen() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      Alert.alert('Thành công', 'Mật khẩu của bạn đã được cập nhật.');
+      Alert.alert(t('common.success'), t('security.successMsg'));
     } catch (error: any) {
-      Alert.alert('Đổi mật khẩu thất bại', error.message ?? 'Đã có lỗi xảy ra. Vui lòng thử lại.');
+      Alert.alert(t('security.failedTitle'), error.message ?? t('common.tryAgainLater'));
     } finally {
       setSaving(false);
     }
@@ -84,17 +86,17 @@ export default function SecurityScreen() {
 
   return (
     <Screen
-      title="Bảo mật & Quyền riêng tư"
+      title={t('security.title')}
       showBack
       keyboardAvoiding
       contentClassName="px-6 pt-4 pb-32"
     >
       <GlassText variant="caption" className="mb-3 ml-1">
-        Đổi mật khẩu
+        {t('security.changePassword')}
       </GlassText>
       <GlassCard intensity={20} className="mb-8" padding="p-5">
         <Input
-          label="Mật khẩu hiện tại"
+          label={t('security.currentPassword')}
           icon={Lock}
           secureToggle
           value={currentPassword}
@@ -103,42 +105,46 @@ export default function SecurityScreen() {
           containerClassName="mb-5"
         />
         <Input
-          label="Mật khẩu mới"
+          label={t('security.newPassword')}
           icon={KeyRound}
           secureToggle
           value={newPassword}
           onChangeText={setNewPassword}
-          placeholder="Ít nhất 6 ký tự"
+          placeholder={t('security.newPasswordPlaceholder')}
           containerClassName="mb-5"
         />
         <Input
-          label="Xác nhận mật khẩu mới"
+          label={t('security.confirmPassword')}
           icon={KeyRound}
           secureToggle
           value={confirmPassword}
           onChangeText={setConfirmPassword}
-          placeholder="Nhập lại mật khẩu mới"
+          placeholder={t('security.confirmPasswordPlaceholder')}
           containerClassName="mb-6"
         />
-        <Button title="Cập nhật mật khẩu" onPress={handleChangePassword} loading={saving} />
+        <Button
+          title={t('security.updatePassword')}
+          onPress={handleChangePassword}
+          loading={saving}
+        />
       </GlassCard>
 
       <GlassText variant="caption" className="mb-3 ml-1">
-        Đăng nhập & Xác thực
+        {t('security.loginAuth')}
       </GlassText>
       <GlassCard intensity={20} className="mb-8" padding="px-5">
         <ToggleRow
           icon={Fingerprint}
-          label="Đăng nhập sinh trắc học"
-          description="Dùng Face ID / vân tay để mở ứng dụng"
+          label={t('security.biometric')}
+          description={t('security.biometricDesc')}
           value={biometric}
           onValueChange={setBiometric}
         />
         <Divider />
         <ToggleRow
           icon={ShieldCheck}
-          label="Xác thực 2 lớp"
-          description="Yêu cầu mã xác nhận khi đăng nhập"
+          label={t('security.twoFactor')}
+          description={t('security.twoFactorDesc')}
           value={twoFactor}
           onValueChange={setTwoFactor}
         />

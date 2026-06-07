@@ -7,14 +7,6 @@ export type ColorScheme = 'light' | 'dark';
 
 const STORAGE_KEY = 'easysplit.theme-mode';
 
-const THEME_LABELS: Record<ThemeMode, string> = {
-  light: 'Sáng',
-  dark: 'Tối',
-  system: 'Theo hệ thống',
-};
-
-export const themeLabel = (mode: ThemeMode) => THEME_LABELS[mode];
-
 /** Effective light/dark scheme for a mode ('system' resolves via the OS). */
 const resolveScheme = (mode: ThemeMode): ColorScheme => {
   if (mode !== 'system') return mode;

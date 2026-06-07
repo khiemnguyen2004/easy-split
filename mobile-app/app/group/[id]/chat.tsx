@@ -18,6 +18,7 @@ import { useAuthStore } from '../../../src/store/useAuthStore';
 import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
 import { BlurView } from 'expo-blur';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../../src/theme';
 import { GlassText, IconButton, Avatar, Loader } from '../../../src/components/ui';
 
@@ -34,6 +35,7 @@ interface Message {
 }
 
 export default function ChatScreen() {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const { id } = useLocalSearchParams();
   const router = useRouter();
@@ -172,7 +174,7 @@ export default function ChatScreen() {
       setInputText('');
       setImages([]);
     } catch (error: any) {
-      Alert.alert('Lỗi', error.message);
+      Alert.alert(t('common.error'), error.message);
     } finally {
       setSubmitting(false);
     }
@@ -244,11 +246,11 @@ export default function ChatScreen() {
             className="mr-4"
           />
           <View className="flex-1">
-            <GlassText variant="h3">Thảo luận nhóm</GlassText>
+            <GlassText variant="h3">{t('chat.title')}</GlassText>
             <View className="mt-0.5 flex-row items-center">
               <View className="mr-1.5 h-1.5 w-1.5 rounded-full bg-success" />
               <GlassText className="font-outfit-bold text-[10px] uppercase tracking-wider text-success">
-                Trực tuyến
+                {t('chat.online')}
               </GlassText>
             </View>
           </View>
@@ -297,7 +299,7 @@ export default function ChatScreen() {
 
           <View className="flex-1 flex-row items-end rounded-[24px] border border-surface-line bg-surface-fill px-4 py-2">
             <TextInput
-              placeholder="Gửi tin nhắn..."
+              placeholder={t('chat.inputPlaceholder')}
               value={inputText}
               onChangeText={setInputText}
               multiline

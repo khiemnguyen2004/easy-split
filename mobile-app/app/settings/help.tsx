@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, Linking } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import {
   ChevronDown,
   Mail,
@@ -12,24 +13,8 @@ import {
 import { useThemeColors } from '../../src/theme';
 import { Screen, GlassCard, GlassText } from '../../src/components/ui';
 
-const FAQS = [
-  {
-    q: 'Làm sao để chia tiền trong nhóm?',
-    a: 'Vào nhóm bạn muốn, nhấn nút thêm chi tiêu, nhập số tiền và chọn những người tham gia. EasySplit sẽ tự động tính phần của mỗi người.',
-  },
-  {
-    q: 'Làm sao để mời thành viên vào nhóm?',
-    a: 'Mở nhóm, vào phần Thành viên và chia sẻ mã mời. Người được mời nhập mã ở màn hình "Tham gia nhóm" để vào nhóm.',
-  },
-  {
-    q: 'Quyết toán nợ hoạt động như thế nào?',
-    a: 'EasySplit tự động tối ưu số giao dịch cần thiết để mọi người trả nợ cho nhau ít bước nhất. Bạn xem chi tiết ở mục Quyết toán của nhóm.',
-  },
-  {
-    q: 'Dữ liệu của tôi có an toàn không?',
-    a: 'Dữ liệu được lưu trữ an toàn và chỉ những thành viên trong nhóm mới xem được thông tin chi tiêu của nhóm đó.',
-  },
-];
+/** FAQ entries are keyed; question/answer text lives in the `help.*` locale files. */
+const FAQ_KEYS = ['faq1', 'faq2', 'faq3', 'faq4'];
 
 interface ContactRowProps {
   icon: LucideIcon;
@@ -67,35 +52,38 @@ const ContactRow = ({ icon: Icon, label, value, onPress }: ContactRowProps) => {
 const Divider = () => <View className="h-px bg-surface-line" />;
 
 export default function HelpScreen() {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const toggle = (index: number) => setOpenIndex((prev) => (prev === index ? null : index));
 
   return (
-    <Screen title="Hỗ trợ & Trợ giúp" showBack contentClassName="px-6 pt-4 pb-32">
+    <Screen title={t('help.title')} showBack contentClassName="px-6 pt-4 pb-32">
       <GlassText variant="caption" className="mb-3 ml-1">
-        Câu hỏi thường gặp
+        {t('help.faqSection')}
       </GlassText>
       <GlassCard intensity={20} className="mb-8" padding="px-5">
-        {FAQS.map((faq, index) => {
+        {FAQ_KEYS.map((faqKey, index) => {
           const open = openIndex === index;
           return (
-            <View key={faq.q}>
+            <View key={faqKey}>
               {index > 0 ? <Divider /> : null}
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => toggle(index)}
                 className="flex-row items-center justify-between py-4"
               >
-                <GlassText className="mr-3 flex-1 font-outfit-medium text-base">{faq.q}</GlassText>
+                <GlassText className="mr-3 flex-1 font-outfit-medium text-base">
+                  {t(`help.${faqKey}q`)}
+                </GlassText>
                 <View style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}>
                   <ChevronDown size={18} color={colors.contentFaint} />
                 </View>
               </TouchableOpacity>
               {open ? (
                 <GlassText variant="body" className="pb-4 leading-6 text-content-muted">
-                  {faq.a}
+                  {t(`help.${faqKey}a`)}
                 </GlassText>
               ) : null}
             </View>
@@ -104,25 +92,29 @@ export default function HelpScreen() {
       </GlassCard>
 
       <GlassText variant="caption" className="mb-3 ml-1">
-        Liên hệ
+        {t('help.contactSection')}
       </GlassText>
       <GlassCard intensity={20} className="mb-8" padding="px-5">
         <ContactRow
           icon={Mail}
-          label="Gửi email hỗ trợ"
+          label={t('help.emailSupport')}
           value="support@easysplit.app"
           onPress={() => Linking.openURL('mailto:support@easysplit.app')}
         />
         <Divider />
         <ContactRow
           icon={MessageCircle}
-          label="Gửi phản hồi"
-          onPress={() => Linking.openURL('mailto:support@easysplit.app?subject=Phản hồi EasySplit')}
+          label={t('help.sendFeedback')}
+          onPress={() =>
+            Linking.openURL(
+              `mailto:support@easysplit.app?subject=${encodeURIComponent(t('help.feedbackSubject'))}`
+            )
+          }
         />
         <Divider />
-        <ContactRow icon={Star} label="Đánh giá ứng dụng" onPress={() => {}} />
+        <ContactRow icon={Star} label={t('help.rateApp')} onPress={() => {}} />
         <Divider />
-        <ContactRow icon={FileText} label="Điều khoản & Chính sách" onPress={() => {}} />
+        <ContactRow icon={FileText} label={t('help.terms')} onPress={() => {}} />
       </GlassCard>
 
       <View className="items-center">

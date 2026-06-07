@@ -1,14 +1,16 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Receipt } from 'lucide-react-native';
 import { Screen, EmptyState } from '../../src/components/ui';
 
 export default function ExpensesScreen() {
+  const { t } = useTranslation();
   return (
-    <Screen title="Chi tiêu" contentClassName="px-6 pt-4 pb-32">
+    <Screen title={t('expenses.title')} contentClassName="px-6 pt-4 pb-32">
       <EmptyState
         icon={Receipt}
-        title="Chưa có chi tiêu"
-        description="Các khoản chi tiêu của bạn sẽ xuất hiện ở đây sau khi bạn thêm chúng vào các nhóm."
+        title={t('expenses.emptyTitle')}
+        description={t('expenses.emptyDesc')}
       />
     </Screen>
   );

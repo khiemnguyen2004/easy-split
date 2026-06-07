@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Dimensions } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { BarChart, PieChart } from 'react-native-chart-kit';
 import { TrendingUp, PieChart as PieIcon, BarChart3, Receipt } from 'lucide-react-native';
 import { useGroupDetails } from '../../../src/hooks/useGroupDetails';
@@ -10,6 +11,7 @@ import { Screen, GlassCard, GlassText, ListItem, Loader } from '../../../src/com
 const screenWidth = Dimensions.get('window').width;
 
 export default function StatsScreen() {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const { id } = useLocalSearchParams();
   const { expenses, members, loading } = useGroupDetails(id);
@@ -44,14 +46,14 @@ export default function StatsScreen() {
   const hasData = userExpenses.some((u) => u.amount > 0);
 
   return (
-    <Screen title="Thống kê" showBack contentClassName="px-6 pt-4 pb-32">
+    <Screen title={t('stats.title')} showBack contentClassName="px-6 pt-4 pb-32">
       <GlassCard intensity={45} className="mb-8" padding="p-6">
         <View className="mb-4 flex-row items-center justify-between">
           <View className="h-12 w-12 items-center justify-center rounded-2xl border border-accent/30 bg-accent/20">
             <TrendingUp size={24} color={colors.accent} />
           </View>
           <GlassText variant="caption" className="tracking-widest">
-            Tổng chi tiêu
+            {t('stats.totalSpent')}
           </GlassText>
         </View>
         <GlassText className="font-outfit-bold text-4xl">
@@ -63,7 +65,7 @@ export default function StatsScreen() {
         <View className="mb-4 ml-1 flex-row items-center">
           <BarChart3 size={20} color={colors.contentMuted} />
           <GlassText variant="h3" className="ml-2">
-            Chi tiêu theo thành viên
+            {t('stats.byMember')}
           </GlassText>
         </View>
         <GlassCard intensity={20} className="items-center" padding="p-4">
@@ -84,7 +86,7 @@ export default function StatsScreen() {
             />
           ) : (
             <View className="items-center py-10">
-              <GlassText className="text-content-faint">Chưa có dữ liệu chi tiêu</GlassText>
+              <GlassText className="text-content-faint">{t('stats.noSpendData')}</GlassText>
             </View>
           )}
         </GlassCard>
@@ -94,7 +96,7 @@ export default function StatsScreen() {
         <View className="mb-4 ml-1 flex-row items-center">
           <PieIcon size={20} color={colors.contentMuted} />
           <GlassText variant="h3" className="ml-2">
-            Tỷ lệ đóng góp
+            {t('stats.contributionRatio')}
           </GlassText>
         </View>
         <GlassCard intensity={20} className="items-center" padding="p-4">
@@ -111,7 +113,7 @@ export default function StatsScreen() {
             />
           ) : (
             <View className="items-center py-10">
-              <GlassText className="text-content-faint">Chưa có dữ liệu đóng góp</GlassText>
+              <GlassText className="text-content-faint">{t('stats.noContribData')}</GlassText>
             </View>
           )}
         </GlassCard>
@@ -121,7 +123,7 @@ export default function StatsScreen() {
         <View className="mb-6 ml-1 flex-row items-center">
           <Receipt size={20} color={colors.contentMuted} />
           <GlassText variant="h3" className="ml-2">
-            Chi tiết gần đây
+            {t('stats.recentDetails')}
           </GlassText>
         </View>
         {expenses.slice(0, 5).map((exp, idx) => (

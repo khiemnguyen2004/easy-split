@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { View, RefreshControl, Alert, TouchableOpacity } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useTranslation } from 'react-i18next';
 import { getGroupBgImage } from '../../src/utils/image';
 import {
   Plus,
@@ -27,6 +28,7 @@ import {
 } from '../../src/components/ui';
 
 export default function HomeScreen() {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const router = useRouter();
   const {
@@ -50,11 +52,11 @@ export default function HomeScreen() {
 
   const handleSignOut = () => {
     Alert.alert(
-      'Đăng xuất',
-      'Bạn có chắc chắn muốn đăng xuất không?',
+      t('common.signOut'),
+      t('common.signOutConfirm'),
       [
-        { text: 'Hủy', style: 'cancel' },
-        { text: 'Đăng xuất', style: 'destructive', onPress: signOut },
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.signOut'), style: 'destructive', onPress: signOut },
       ],
       { cancelable: true }
     );
@@ -64,8 +66,8 @@ export default function HomeScreen() {
 
   return (
     <Screen
-      title={user?.user_metadata?.full_name || 'Người dùng'}
-      subtitle="Chào buổi sáng,"
+      title={user?.user_metadata?.full_name || t('common.user')}
+      subtitle={t('home.greeting')}
       headerRight={<IconButton icon={LogOut} onPress={handleSignOut} />}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
@@ -99,7 +101,7 @@ export default function HomeScreen() {
         <View className="mb-8 flex-row items-start justify-between">
           <View>
             <GlassText variant="caption" className="mb-1">
-              Tổng dư nợ
+              {t('home.totalBalance')}
             </GlassText>
             <GlassText className="font-outfit-bold text-4xl">
               {totalBalance < 0 ? '-' : ''}
@@ -115,21 +117,23 @@ export default function HomeScreen() {
           <StatTile
             icon={ArrowDownLeft}
             tone="success"
-            label="bạn được trả"
+            label={t('home.youAreOwed')}
             value={formatCurrency(owedToUser)}
           />
           <StatTile
             icon={ArrowUpRight}
             tone="danger"
-            label="bạn cần trả"
+            label={t('home.youOwe')}
             value={formatCurrency(userOwes)}
           />
         </View>
       </GlassCard>
 
       <View className="mb-6 flex-row items-center justify-between">
-        <GlassText variant="h3">Nhóm của bạn</GlassText>
-        {groups.length > 0 ? <Badge label={`${groups.length} nhóm hoạt động`} /> : null}
+        <GlassText variant="h3">{t('home.yourGroups')}</GlassText>
+        {groups.length > 0 ? (
+          <Badge label={t('home.activeGroups', { count: groups.length })} />
+        ) : null}
       </View>
 
       {loading ? (
@@ -137,9 +141,9 @@ export default function HomeScreen() {
       ) : groups.length === 0 ? (
         <EmptyState
           icon={Users}
-          title="Chưa có nhóm nào"
-          description="Quản lý các khoản chi tiêu chung chưa bao giờ dễ dàng hơn."
-          actionLabel="Tạo nhóm ngay"
+          title={t('home.noGroupsTitle')}
+          description={t('home.noGroupsDesc')}
+          actionLabel={t('home.createGroupNow')}
           onAction={() => router.push('/create-group')}
         />
       ) : (
@@ -155,7 +159,7 @@ export default function HomeScreen() {
               <View className="mt-0.5 flex-row items-center">
                 <Users size={12} color={colors.content} />
                 <GlassText variant="caption" className="ml-1.5">
-                  {item.member_count} thành viên
+                  {t('common.memberCount', { count: item.member_count })}
                 </GlassText>
               </View>
             }

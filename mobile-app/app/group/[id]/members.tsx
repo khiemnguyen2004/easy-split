@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, TouchableOpacity, Alert } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { UserPlus, UserMinus, Shield, ShieldCheck } from 'lucide-react-native';
 import { useGroupDetails } from '../../../src/hooks/useGroupDetails';
 import { useThemeColors } from '../../../src/theme';
@@ -14,6 +15,7 @@ import {
 } from '../../../src/components/ui';
 
 export default function MembersScreen() {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const { id } = useLocalSearchParams();
   const { group, members, loading } = useGroupDetails(id);
@@ -21,22 +23,26 @@ export default function MembersScreen() {
   if (loading) return <Loader fullscreen />;
 
   const handleRemoveMember = (memberName: string) => {
-    Alert.alert('Xóa thành viên', `Bạn có chắc muốn xóa ${memberName} khỏi nhóm không?`, [
-      { text: 'Hủy', style: 'cancel' },
-      { text: 'Xóa', style: 'destructive', onPress: () => console.log('Remove member') },
+    Alert.alert(t('members.removeTitle'), t('members.removeConfirm', { name: memberName }), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('common.remove'),
+        style: 'destructive',
+        onPress: () => console.log('Remove member'),
+      },
     ]);
   };
 
   return (
     <Screen
-      title="Thành viên"
+      title={t('members.title')}
       subtitle={group?.group_name}
       showBack
       headerRight={<IconButton icon={UserPlus} onPress={() => {}} />}
       contentClassName="px-6 pt-4 pb-32"
     >
       <GlassText variant="caption" className="mb-4 ml-1 tracking-widest">
-        Danh sách ({members.length})
+        {t('members.listCount', { count: members.length })}
       </GlassText>
 
       {members.map((member) => {
@@ -61,7 +67,9 @@ export default function MembersScreen() {
                   </View>
                 ) : null}
               </View>
-              <GlassText variant="caption">{isOwner ? 'Trưởng nhóm' : 'Thành viên'}</GlassText>
+              <GlassText variant="caption">
+                {isOwner ? t('members.owner') : t('members.member')}
+              </GlassText>
             </View>
 
             {!isOwner ? (
@@ -80,12 +88,11 @@ export default function MembersScreen() {
         <View className="mb-3 flex-row items-center">
           <ShieldCheck size={20} color={colors.success} />
           <GlassText className="ml-2 font-outfit-bold text-sm text-success">
-            Quy định nhóm
+            {t('members.rulesTitle')}
           </GlassText>
         </View>
         <GlassText variant="caption" className="leading-5">
-          Chỉ trưởng nhóm mới có quyền xóa thành viên hoặc thay đổi các thiết lập quan trọng của
-          nhóm. Tất cả thành viên đều có thể thêm chi tiêu mới.
+          {t('members.rulesDesc')}
         </GlassText>
       </GlassCard>
     </Screen>

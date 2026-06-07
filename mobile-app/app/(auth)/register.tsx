@@ -10,11 +10,13 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import { User, Mail, Lock, ArrowLeft } from 'lucide-react-native';
 import { supabase } from '../../src/api/supabase';
 import { GlassCard, GlassText, Input, Button, IconButton } from '../../src/components/ui';
 
 export default function RegisterScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -23,7 +25,7 @@ export default function RegisterScreen() {
 
   const handleRegister = async () => {
     if (!fullName || !email || !password) {
-      Alert.alert('Lỗi', 'Vui lòng điền đầy đủ các thông tin.');
+      Alert.alert(t('common.error'), t('auth.register.missingFields'));
       return;
     }
 
@@ -41,15 +43,13 @@ export default function RegisterScreen() {
         if (data.session) {
           router.replace('/(tabs)');
         } else {
-          Alert.alert(
-            'Đăng ký thành công',
-            'Vui lòng kiểm tra email của bạn để xác thực tài khoản.',
-            [{ text: 'OK', onPress: () => router.push('/(auth)/login') }]
-          );
+          Alert.alert(t('auth.register.successTitle'), t('auth.register.successMessage'), [
+            { text: t('common.ok'), onPress: () => router.push('/(auth)/login') },
+          ]);
         }
       }
     } catch (error: any) {
-      Alert.alert('Đăng ký thất bại', error.message || 'Đã có lỗi xảy ra.');
+      Alert.alert(t('auth.register.failed'), error.message || t('common.somethingWrong'));
     } finally {
       setLoading(false);
     }
@@ -85,24 +85,24 @@ export default function RegisterScreen() {
 
           <View className="mb-8 items-center">
             <GlassText variant="h1" className="mb-2">
-              Tạo tài khoản
+              {t('auth.register.title')}
             </GlassText>
             <GlassText variant="body" className="px-4 text-center text-content-muted">
-              Quản lý chi tiêu nhóm minh bạch và thông minh ngay hôm nay.
+              {t('auth.register.subtitle')}
             </GlassText>
           </View>
 
           <GlassCard intensity={30} className="mb-8" padding="p-6">
             <View className="gap-5">
               <Input
-                label="Họ và tên"
+                label={t('auth.fullNameLabel')}
                 icon={User}
-                placeholder="Thêm tên của bạn..."
+                placeholder={t('auth.fullNamePlaceholder')}
                 value={fullName}
                 onChangeText={setFullName}
               />
               <Input
-                label="Địa chỉ Email"
+                label={t('auth.emailLabel')}
                 icon={Mail}
                 placeholder="email@example.com"
                 value={email}
@@ -111,7 +111,7 @@ export default function RegisterScreen() {
                 keyboardType="email-address"
               />
               <Input
-                label="Mật khẩu"
+                label={t('auth.passwordLabel')}
                 icon={Lock}
                 placeholder="••••••••"
                 value={password}
@@ -122,7 +122,7 @@ export default function RegisterScreen() {
           </GlassCard>
 
           <Button
-            title="Bắt đầu ngay"
+            title={t('auth.register.button')}
             onPress={handleRegister}
             loading={loading}
             className="mb-8"
@@ -130,11 +130,11 @@ export default function RegisterScreen() {
 
           <View className="mb-10 flex-row justify-center">
             <GlassText variant="body" className="text-content-muted">
-              Bạn đã có tài khoản?{' '}
+              {t('auth.register.haveAccount')}
             </GlassText>
             <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
               <GlassText variant="body" className="font-outfit-bold text-accent">
-                Đăng nhập
+                {t('auth.register.signIn')}
               </GlassText>
             </TouchableOpacity>
           </View>

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Alert } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { User, Mail, Phone, AtSign } from 'lucide-react-native';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { accountService } from '../../src/services/account.service';
@@ -8,6 +9,7 @@ import { useThemeColors } from '../../src/theme';
 import { Screen, GlassCard, GlassText, Input, Button } from '../../src/components/ui';
 
 export default function ProfileScreen() {
+  const { t } = useTranslation();
   const colors = useThemeColors();
   const { user, setUser } = useAuthStore();
 
@@ -37,7 +39,7 @@ export default function ProfileScreen() {
 
   const handleSave = async () => {
     if (!fullName.trim()) {
-      Alert.alert('Thiếu thông tin', 'Vui lòng nhập họ và tên của bạn.');
+      Alert.alert(t('common.missingInfo'), t('profile.errMissingName'));
       return;
     }
     setSaving(true);
@@ -47,22 +49,22 @@ export default function ProfileScreen() {
         phone_number: phone,
       });
       setUser(updatedUser);
-      Alert.alert('Đã lưu', 'Thông tin cá nhân của bạn đã được cập nhật.');
+      Alert.alert(t('profile.savedTitle'), t('profile.savedMsg'));
     } catch (error: any) {
-      Alert.alert('Cập nhật thất bại', error.message ?? 'Đã có lỗi xảy ra. Vui lòng thử lại.');
+      Alert.alert(t('profile.updateFailed'), error.message ?? t('common.tryAgainLater'));
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <Screen title="Thông tin cá nhân" showBack keyboardAvoiding contentClassName="px-6 pt-4 pb-32">
+    <Screen title={t('profile.title')} showBack keyboardAvoiding contentClassName="px-6 pt-4 pb-32">
       <View className="mb-8 items-center">
         <View className="h-24 w-24 items-center justify-center rounded-full border-2 border-accent/30 bg-accent/20">
           <User size={44} color={colors.accent} />
         </View>
         <GlassText variant="h3" className="mt-4">
-          {fullName || 'Người dùng'}
+          {fullName || t('common.user')}
         </GlassText>
         <GlassText variant="caption" className="mt-1">
           {user?.email}
@@ -70,39 +72,39 @@ export default function ProfileScreen() {
       </View>
 
       <GlassText variant="caption" className="mb-3 ml-1">
-        Chi tiết
+        {t('profile.details')}
       </GlassText>
       <GlassCard intensity={20} className="mb-8" padding="p-5">
         <Input
-          label="Họ và tên"
+          label={t('profile.fullNameLabel')}
           icon={User}
           value={fullName}
           onChangeText={setFullName}
-          placeholder="Nhập họ và tên"
+          placeholder={t('profile.fullNamePlaceholder')}
           containerClassName="mb-5"
         />
         <Input
-          label="Số điện thoại"
+          label={t('profile.phoneLabel')}
           icon={Phone}
           value={phone}
           onChangeText={setPhone}
-          placeholder="Chưa cập nhật"
+          placeholder={t('profile.phonePlaceholder')}
           keyboardType="phone-pad"
           containerClassName="mb-5"
         />
         <Input
-          label="Email"
+          label={t('profile.emailLabel')}
           icon={Mail}
           value={user?.email ?? ''}
           editable={false}
           trailing={<AtSign size={16} color={colors.contentFaint} />}
         />
         <GlassText variant="caption" className="ml-1 mt-2 normal-case opacity-60">
-          Email dùng để đăng nhập và không thể thay đổi.
+          {t('profile.emailNote')}
         </GlassText>
       </GlassCard>
 
-      <Button title="Lưu thay đổi" onPress={handleSave} loading={saving} />
+      <Button title={t('profile.save')} onPress={handleSave} loading={saving} />
     </Screen>
   );
 }
