@@ -247,12 +247,6 @@ export default function ChatScreen() {
           />
           <View className="flex-1">
             <GlassText variant="h3">{t('chat.title')}</GlassText>
-            <View className="mt-0.5 flex-row items-center">
-              <View className="mr-1.5 h-1.5 w-1.5 rounded-full bg-success" />
-              <GlassText className="font-outfit-bold text-[10px] uppercase tracking-wider text-success">
-                {t('chat.online')}
-              </GlassText>
-            </View>
           </View>
         </View>
 

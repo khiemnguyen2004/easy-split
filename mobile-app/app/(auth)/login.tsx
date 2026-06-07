@@ -42,6 +42,20 @@ export default function LoginScreen() {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      Alert.alert(t('auth.forgotTitle'), t('auth.forgotNeedEmail'));
+      return;
+    }
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim());
+      if (error) throw error;
+      Alert.alert(t('auth.forgotSentTitle'), t('auth.forgotSentMsg'));
+    } catch (error: any) {
+      Alert.alert(t('common.error'), error.message || t('common.somethingWrong'));
+    }
+  };
+
   return (
     <SafeAreaView className="flex-1">
       <KeyboardAvoidingView
@@ -86,7 +100,7 @@ export default function LoginScreen() {
               <Input
                 label={t('auth.passwordLabel')}
                 labelAccessory={
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={handleForgotPassword}>
                     <GlassText variant="caption" className="font-outfit-bold lowercase text-accent">
                       {t('auth.forgot')}
                     </GlassText>

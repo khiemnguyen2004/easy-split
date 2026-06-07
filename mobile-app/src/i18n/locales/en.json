@@ -24,6 +24,7 @@
   "tabs": {
     "overview": "Overview",
     "groups": "Groups",
+    "debts": "Debts",
     "notifications": "Notifications",
     "settings": "Settings"
   },
@@ -33,6 +34,10 @@
     "fullNameLabel": "Full name",
     "fullNamePlaceholder": "Add your name...",
     "forgot": "Forgot?",
+    "forgotTitle": "Forgot password",
+    "forgotNeedEmail": "Please enter your email above first.",
+    "forgotSentTitle": "Email sent",
+    "forgotSentMsg": "Check your inbox for a link to reset your password.",
     "login": {
       "welcomeBack": "Welcome back!",
       "subtitle": "Sign in to continue managing your expenses.",
@@ -78,10 +83,14 @@
   "debts": {
     "title": "Debts",
     "balancedTitle": "You're all settled up!",
-    "balancedDesc": "You have no pending debts or credits right now."
+    "balancedDesc": "You have no pending debts or credits right now.",
+    "owedToYou": "You're owed",
+    "youOwe": "You owe",
+    "byGroup": "By group"
   },
   "expenses": {
     "title": "Expenses",
+    "untitled": "Expense",
     "emptyTitle": "No expenses yet",
     "emptyDesc": "Your expenses will appear here once you add them to your groups."
   },
@@ -89,6 +98,14 @@
     "title": "Notifications",
     "emptyTitle": "No notifications",
     "emptyDesc": "You'll be notified when there's a new expense or a group invite."
+  },
+  "notif": {
+    "expenseAddedTitle": "New expense",
+    "expenseAddedBody": "{{actor}} added an expense to {{group}}",
+    "settlementSubmittedTitle": "Payment submitted",
+    "settlementSubmittedBody": "{{actor}} sent a payment proof",
+    "settlementConfirmedTitle": "Payment confirmed",
+    "settlementConfirmedBody": "Your payment has been confirmed"
   },
   "createGroup": {
     "successTitle": "Group created!",
@@ -136,11 +153,16 @@
     "noExpenses": "No expenses recorded yet.",
     "expenseBy": "By {{name}} • {{date}}",
     "financialStatus": "Financial status",
+    "budget": "Budget",
+    "budgetExceeded": "Budget exceeded",
+    "setBudget": "Set group budget",
+    "budgetPrompt": "Enter the group budget (VND)",
     "debtSecured": "Debt secured",
     "settleNow": "Settle now",
     "groupFund": "Group shared fund",
-    "fundComingSoon": "Coming soon",
-    "fundComingSoonDesc": "The shared fund will help the group manage recurring expenses more easily."
+    "fundSectionDesc": "Create a shared fund and track everyone's contributions toward a common goal.",
+    "openFunds": "Manage funds",
+    "viewStats": "View statistics"
   },
   "addExpense": {
     "title": "Add expense",
@@ -167,11 +189,11 @@
   },
   "chat": {
     "title": "Group chat",
-    "online": "Online",
     "inputPlaceholder": "Type a message..."
   },
   "members": {
     "title": "Members",
+    "inviteMessage": "Join the group \"{{name}}\" on EasySplit with invite code: {{code}}",
     "removeTitle": "Remove member",
     "removeConfirm": "Are you sure you want to remove {{name}} from the group?",
     "listCount": "List ({{count}})",
@@ -221,6 +243,12 @@
     "promptTitle": "Contribute to fund",
     "promptMsg": "Enter the amount you want to contribute",
     "contribute": "Contribute",
+    "contributions": "Contributions",
+    "noContribs": "No contributions yet",
+    "confirm": "Confirm",
+    "confirmed": "Confirmed",
+    "pending": "Pending",
+    "confirmedContribution": "Contribution confirmed.",
     "errMissing": "Please enter the fund name and target amount.",
     "created": "New fund created.",
     "errNoAmount": "Please enter a contribution amount.",
@@ -283,6 +311,13 @@
     "loginAuth": "Login & Authentication",
     "biometric": "Biometric login",
     "biometricDesc": "Use Face ID / fingerprint to unlock the app",
+    "biometricPrompt": "Confirm to enable biometric lock",
+    "biometricUnavailableTitle": "Biometrics unavailable",
+    "biometricUnavailableMsg": "Your device has no Face ID / fingerprint set up, or authentication was cancelled.",
+    "unlockPrompt": "Unlock EasySplit",
+    "lockedTitle": "EasySplit is locked",
+    "lockedDesc": "Authenticate to continue.",
+    "unlock": "Unlock",
     "twoFactor": "Two-factor authentication",
     "twoFactorDesc": "Require a verification code when signing in",
     "missingFields": "Please fill in all password fields.",
@@ -317,7 +352,6 @@
     "contactSection": "Contact",
     "emailSupport": "Email support",
     "sendFeedback": "Send feedback",
-    "rateApp": "Rate the app",
     "terms": "Terms & Policies",
     "feedbackSubject": "EasySplit Feedback",
     "faq1q": "How do I split money in a group?",
@@ -328,6 +362,10 @@
     "faq3a": "EasySplit automatically optimizes the number of transactions so everyone settles up in the fewest steps. See details in the group's Settlement section.",
     "faq4q": "Is my data safe?",
     "faq4a": "Data is stored securely and only group members can see that group's expense info."
+  },
+  "legal": {
+    "termsTab": "Terms",
+    "privacyTab": "Privacy"
   },
   "account": {
     "errNotLoggedIn": "You need to sign in to update your info.",

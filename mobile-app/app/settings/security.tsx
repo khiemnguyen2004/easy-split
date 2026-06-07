@@ -3,6 +3,7 @@ import { View, Switch, Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { Lock, KeyRound, Fingerprint, ShieldCheck, LucideIcon } from 'lucide-react-native';
 import { useThemeColors } from '../../src/theme';
+import { useSecurityStore } from '../../src/store/useSecurityStore';
 import { accountService } from '../../src/services/account.service';
 import { Screen, GlassCard, GlassText, Input, Button } from '../../src/components/ui';
 
@@ -50,8 +51,16 @@ export default function SecurityScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [saving, setSaving] = useState(false);
 
-  const [biometric, setBiometric] = useState(false);
+  const biometric = useSecurityStore((s) => s.biometricEnabled);
+  const setBiometricEnabled = useSecurityStore((s) => s.setBiometricEnabled);
   const [twoFactor, setTwoFactor] = useState(false);
+
+  const handleBiometricToggle = async (next: boolean) => {
+    const ok = await setBiometricEnabled(next);
+    if (next && !ok) {
+      Alert.alert(t('security.biometricUnavailableTitle'), t('security.biometricUnavailableMsg'));
+    }
+  };
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -138,7 +147,7 @@ export default function SecurityScreen() {
           label={t('security.biometric')}
           description={t('security.biometricDesc')}
           value={biometric}
-          onValueChange={setBiometric}
+          onValueChange={handleBiometricToggle}
         />
         <Divider />
         <ToggleRow

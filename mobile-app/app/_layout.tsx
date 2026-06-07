@@ -16,11 +16,13 @@ import '../src/i18n';
 import { useProtectedRoute } from '../src/hooks/useProtectedRoute';
 import { useThemeStore } from '../src/store/useThemeStore';
 import { useLanguageStore } from '../src/store/useLanguageStore';
+import { useSecurityStore } from '../src/store/useSecurityStore';
 import { themeVars } from '../src/theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { cssInterop } from 'nativewind';
 
 import { MeshBackground } from '../src/components/ui/MeshBackground';
+import { LockScreen } from '../src/components/LockScreen';
 
 SplashScreen.preventAutoHideAsync().catch(() => {
   // Splash may already be hidden during dev hot-reload; safe to ignore.
@@ -33,6 +35,7 @@ cssInterop(LinearGradient, {
 function RootLayoutNav() {
   useProtectedRoute();
   const scheme = useThemeStore((s) => s.scheme);
+  const locked = useSecurityStore((s) => s.locked);
 
   const NavTheme = {
     ...DefaultTheme,
@@ -59,8 +62,10 @@ function RootLayoutNav() {
             <Stack.Screen name="(auth)/login" options={{ animation: 'fade' }} />
             <Stack.Screen name="(auth)/register" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="group/[id]" options={{ animation: 'slide_from_right' }} />
+            <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
           </Stack>
         </MeshBackground>
+        {locked ? <LockScreen /> : null}
         <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       </View>
     </ThemeProvider>
@@ -75,18 +80,23 @@ export default function RootLayout() {
     Outfit_700Bold,
   });
 
+  const securityHydrated = useSecurityStore((s) => s.hydrated);
+
   useEffect(() => {
     useThemeStore.getState().hydrate();
     useLanguageStore.getState().hydrate();
+    useSecurityStore.getState().hydrate();
   }, []);
 
   useEffect(() => {
-    if (loaded || error) {
+    if ((loaded || error) && securityHydrated) {
       SplashScreen.hideAsync();
     }
-  }, [loaded, error]);
+  }, [loaded, error, securityHydrated]);
 
-  if (!loaded && !error) {
+  // Wait for fonts AND the security store so the lock is applied before first
+  // paint (avoids a flash of app content when the lock is enabled).
+  if ((!loaded && !error) || !securityHydrated) {
     return null;
   }
 

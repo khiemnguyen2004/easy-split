@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { View, TouchableOpacity, Linking } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import {
   ChevronDown,
   Mail,
   MessageCircle,
   FileText,
-  Star,
   ChevronRight,
   LucideIcon,
 } from 'lucide-react-native';
@@ -53,6 +53,7 @@ const Divider = () => <View className="h-px bg-surface-line" />;
 
 export default function HelpScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const colors = useThemeColors();
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
@@ -112,9 +113,11 @@ export default function HelpScreen() {
           }
         />
         <Divider />
-        <ContactRow icon={Star} label={t('help.rateApp')} onPress={() => {}} />
-        <Divider />
-        <ContactRow icon={FileText} label={t('help.terms')} onPress={() => {}} />
+        <ContactRow
+          icon={FileText}
+          label={t('help.terms')}
+          onPress={() => router.push('/settings/legal')}
+        />
       </GlassCard>
 
       <View className="items-center">

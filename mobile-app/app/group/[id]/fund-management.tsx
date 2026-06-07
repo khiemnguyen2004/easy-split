@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { View, Alert } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import React, { useState, useCallback } from 'react';
+import { View, Alert, RefreshControl, TouchableOpacity } from 'react-native';
+import { useLocalSearchParams, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Plus, PiggyBank, Target, CheckCircle2 } from 'lucide-react-native';
+import { Plus, PiggyBank, Target, CheckCircle2, Check, Clock } from 'lucide-react-native';
 import { supabase } from '../../../src/api/supabase';
 import { useAuthStore } from '../../../src/store/useAuthStore';
 import * as ImagePicker from 'expo-image-picker';
@@ -34,6 +34,8 @@ export default function FundManagementScreen() {
   const { id } = useLocalSearchParams();
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [funds, setFunds] = useState<any[]>([]);
   const [contributions, setContributions] = useState<any[]>([]);
   const [isCreating, setIsCreating] = useState(false);
@@ -41,20 +43,24 @@ export default function FundManagementScreen() {
   const [targetAmount, setTargetAmount] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (id) {
-      fetchData();
-    }
-  }, [id]);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const groupId = Array.isArray(id) ? id[0] : id;
+      if (!groupId) return;
+
+      // Who can confirm contributions: the group creator (admin).
+      const { data: groupData } = await supabase
+        .from('groups')
+        .select('created_by')
+        .eq('group_id', groupId)
+        .single();
+      setIsAdmin(!!groupData && groupData.created_by === user?.id);
 
       const { data: fundsData, error: fundsError } = await supabase
         .from('fundings')
         .select('*')
-        .eq('group_id', groupId);
+        .eq('group_id', groupId)
+        .order('created_at', { ascending: false });
 
       if (fundsError) throw fundsError;
       setFunds(fundsData || []);
@@ -64,16 +70,33 @@ export default function FundManagementScreen() {
         const { data: contribs, error: contribsError } = await supabase
           .from('fund_contributions')
           .select('*, profiles(full_name)')
-          .in('funding_id', fundIds);
+          .in('funding_id', fundIds)
+          .order('created_at', { ascending: false });
 
         if (contribsError) throw contribsError;
         setContributions(contribs || []);
+      } else {
+        setContributions([]);
       }
     } catch (error) {
       console.error('Error fetching funds:', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
+  }, [id, user?.id]);
+
+  // Refetch every time the screen gains focus so a freshly created fund (or a
+  // new contribution) always shows when navigating back into the screen.
+  useFocusEffect(
+    useCallback(() => {
+      fetchData();
+    }, [fetchData])
+  );
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchData();
   };
 
   const handleCreateFund = async () => {
@@ -89,7 +112,6 @@ export default function FundManagementScreen() {
         group_id: groupId,
         name: fundName.trim(),
         target_amount: parseFloat(targetAmount),
-        current_amount: 0,
         status: 'active',
       });
 
@@ -172,10 +194,50 @@ export default function FundManagementScreen() {
       'numeric'
     );
 
+  // Admin confirms a pending contribution → mark confirmed and sync the fund's
+  // current_amount to the sum of all confirmed contributions.
+  const confirmContribution = async (contrib: any, fundingId: string) => {
+    setSubmitting(true);
+    try {
+      const { error } = await supabase
+        .from('fund_contributions')
+        .update({ status: 'confirmed' })
+        .eq('contribution_id', contrib.contribution_id);
+      if (error) throw error;
+
+      const newConfirmedTotal = contributions
+        .filter(
+          (c) =>
+            c.funding_id === fundingId &&
+            (c.status === 'confirmed' || c.contribution_id === contrib.contribution_id)
+        )
+        .reduce((sum, c) => sum + Number(c.amount), 0);
+
+      await supabase
+        .from('fundings')
+        .update({ current_amount: newConfirmedTotal })
+        .eq('funding_id', fundingId);
+
+      Alert.alert(t('common.success'), t('fund.confirmedContribution'));
+      fetchData();
+    } catch (error: any) {
+      Alert.alert(t('common.error'), error.message);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   if (loading) return <Loader fullscreen />;
 
   return (
-    <Screen title={t('fund.title')} showBack contentClassName="px-6 pt-4 pb-32">
+    <Screen
+      title={t('fund.title')}
+      showBack
+      contentClassName="px-6 pt-4 pb-32"
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
+      }
+    >
       {isCreating ? (
         <GlassCard intensity={30} className="mb-8" padding="p-6">
           <GlassText variant="h3" className="mb-6">
@@ -237,7 +299,10 @@ export default function FundManagementScreen() {
       ) : (
         funds.map((fund) => {
           const fundContribs = contributions.filter((c) => c.funding_id === fund.funding_id);
-          const progress = fund.current_amount / fund.target_amount;
+          const currentAmount = fundContribs
+            .filter((c) => c.status === 'confirmed')
+            .reduce((sum, c) => sum + Number(c.amount), 0);
+          const progress = fund.target_amount ? currentAmount / fund.target_amount : 0;
 
           return (
             <GlassCard key={fund.funding_id} intensity={25} className="mb-6" padding="p-6">
@@ -247,7 +312,7 @@ export default function FundManagementScreen() {
                   <View className="flex-row items-center">
                     <Target size={12} color={colors.contentFaint} />
                     <GlassText variant="caption" className="ml-1 text-[10px]">
-                      {t('fund.target', { amount: fund.target_amount.toLocaleString() })}
+                      {t('fund.target', { amount: Number(fund.target_amount).toLocaleString() })}
                     </GlassText>
                   </View>
                 </View>
@@ -257,35 +322,70 @@ export default function FundManagementScreen() {
               <ProgressBar progress={progress} tone="success" className="mb-2 h-2.5" />
               <View className="mb-6 flex-row justify-between">
                 <GlassText className="font-outfit-bold text-xs text-success">
-                  {fund.current_amount.toLocaleString()}đ
+                  {currentAmount.toLocaleString()}đ
                 </GlassText>
                 <GlassText className="font-outfit-bold text-xs text-content-muted">
                   {Math.round(progress * 100)}%
                 </GlassText>
               </View>
 
-              <View className="mb-6 flex-row items-center">
-                <View className="mr-3 flex-row -space-x-3">
-                  {fundContribs.slice(0, 3).map((c, i) => (
-                    <Avatar
-                      key={i}
-                      name={c.profiles?.full_name}
-                      size="sm"
-                      style={{ zIndex: 10 - i }}
-                    />
-                  ))}
-                  {fundContribs.length > 3 ? (
-                    <View className="h-8 w-8 items-center justify-center rounded-full border border-surface-line bg-surface-fill">
-                      <GlassText className="font-outfit-bold text-[10px] text-content-muted">
-                        +{fundContribs.length - 3}
-                      </GlassText>
-                    </View>
-                  ) : null}
-                </View>
-                <GlassText variant="caption" className="text-[10px] normal-case">
-                  {t('fund.contributorsCount', { count: fundContribs.length })}
+              {/* Contributions list with admin confirm controls */}
+              <GlassText variant="caption" className="mb-3 ml-1 text-[10px] tracking-widest">
+                {t('fund.contributions')}
+              </GlassText>
+              {fundContribs.length === 0 ? (
+                <GlassText variant="caption" className="mb-6 ml-1 normal-case opacity-60">
+                  {t('fund.noContribs')}
                 </GlassText>
-              </View>
+              ) : (
+                <View className="mb-6 gap-2">
+                  {fundContribs.map((c) => {
+                    const confirmed = c.status === 'confirmed';
+                    return (
+                      <View
+                        key={c.contribution_id}
+                        className="flex-row items-center rounded-2xl border border-surface-line bg-surface-fill p-3"
+                      >
+                        <Avatar name={c.profiles?.full_name} size="sm" className="mr-3" />
+                        <View className="flex-1">
+                          <GlassText className="font-outfit-medium text-sm" numberOfLines={1}>
+                            {c.profiles?.full_name || t('common.user')}
+                          </GlassText>
+                          <GlassText variant="caption" className="text-[10px]">
+                            {Number(c.amount).toLocaleString()}đ
+                          </GlassText>
+                        </View>
+
+                        {confirmed ? (
+                          <View className="flex-row items-center rounded-full border border-success/20 bg-success/10 px-2.5 py-1">
+                            <Check size={12} color={colors.success} />
+                            <GlassText className="ml-1 font-outfit-bold text-[9px] uppercase tracking-tight text-success">
+                              {t('fund.confirmed')}
+                            </GlassText>
+                          </View>
+                        ) : isAdmin ? (
+                          <TouchableOpacity
+                            disabled={submitting}
+                            onPress={() => confirmContribution(c, fund.funding_id)}
+                            className="rounded-xl bg-content px-4 py-2"
+                          >
+                            <GlassText className="font-outfit-bold text-xs text-white">
+                              {t('fund.confirm')}
+                            </GlassText>
+                          </TouchableOpacity>
+                        ) : (
+                          <View className="flex-row items-center rounded-full border border-surface-line px-2.5 py-1">
+                            <Clock size={12} color={colors.contentFaint} />
+                            <GlassText className="ml-1 font-outfit-bold text-[9px] uppercase tracking-tight text-content-muted">
+                              {t('fund.pending')}
+                            </GlassText>
+                          </View>
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
 
               <Button
                 title={t('fund.deposit')}

@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home, Users, Receipt, Settings, Bell } from 'lucide-react-native';
+import { Home, Users, Receipt, Settings, Wallet } from 'lucide-react-native';
 import { View, Pressable, Text, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
@@ -99,7 +99,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => <Users size={size} color={color} />,
         }}
       />
-      <Tabs.Screen name="debts" options={{ href: null }} />
       <Tabs.Screen
         name="expenses"
         options={{
@@ -111,10 +110,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="notifications"
+        name="debts"
         options={{
-          title: t('tabs.notifications'),
-          tabBarIcon: ({ color, size }) => <Bell size={size} color={color} />,
+          title: t('tabs.debts'),
+          tabBarIcon: ({ color, size }) => <Wallet size={size} color={color} />,
         }}
       />
       <Tabs.Screen

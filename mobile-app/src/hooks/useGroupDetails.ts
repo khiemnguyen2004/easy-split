@@ -6,6 +6,7 @@ export interface Expense {
   amount: number;
   description: string;
   title: string | null;
+  category: string | null;
   category_id: string | null;
   created_at: string;
   payer_id: string;
@@ -25,6 +26,7 @@ export const useGroupDetails = (id: string | string[] | undefined) => {
   const [members, setMembers] = useState<any[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [netBalances, setNetBalances] = useState<NetBalance[]>([]);
+  const [funds, setFunds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -42,6 +44,7 @@ export const useGroupDetails = (id: string | string[] | undefined) => {
       setMembers(data.members || []);
       setExpenses((data.expenses as any) || []);
       setNetBalances(data.netBalances || []);
+      setFunds(data.fundings || []);
     } catch (error) {
       console.error('Error fetching group details:', error);
     } finally {
@@ -64,6 +67,7 @@ export const useGroupDetails = (id: string | string[] | undefined) => {
     members,
     expenses,
     netBalances,
+    funds,
     loading,
     refreshing,
     fetchData,

@@ -201,11 +201,30 @@ export const groupService = {
 
     finalNetBalances.sort((a, b) => b.amount - a.amount);
 
+    // 5. Fetch group funds (for the group dashboard "Funds" tab preview)
+    const { data: fundingsData } = await supabase
+      .from('fundings')
+      .select('*')
+      .eq('group_id', groupId)
+      .order('created_at', { ascending: false });
+
+    // Flatten the joined profile so every consumer can read `member.full_name`
+    // / `member.avatar_url` directly (the raw row nests them under `profiles`).
+    const members = (membersData || []).map((m) => ({
+      user_id: m.user_id,
+      role: m.role,
+      // @ts-ignore - `profiles` is a joined relation object
+      full_name: m.profiles?.full_name ?? null,
+      // @ts-ignore
+      avatar_url: m.profiles?.avatar_url ?? null,
+    }));
+
     return {
       group: groupData,
-      members: membersData,
+      members,
       expenses: expensesData,
       netBalances: finalNetBalances,
+      fundings: fundingsData || [],
     };
   },
 
@@ -250,7 +269,7 @@ export const groupService = {
     const { data: settlements, error: settlementsError } = await supabase
       .from('debt_settlements')
       .select('debtor_id, creditor_id, amount')
-      .eq('status', 'paid')
+      .eq('status', 'confirmed')
       .or(`debtor_id.eq.${userId},creditor_id.eq.${userId}`);
 
     if (settlementsError) throw settlementsError;
@@ -289,5 +308,137 @@ export const groupService = {
       userOwes: Math.max(0, owes),
       totalBalance: owed - owes,
     };
+  },
+
+  /** The user's in-app notifications (RLS-scoped to the signed-in user). */
+  async getNotifications() {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100);
+    if (error) throw error;
+    return data || [];
+  },
+
+  /** Count of unread notifications for the signed-in user. */
+  async getUnreadNotificationCount() {
+    const { count, error } = await supabase
+      .from('notifications')
+      .select('notification_id', { count: 'exact', head: true })
+      .eq('is_read', false);
+    if (error) throw error;
+    return count || 0;
+  },
+
+  /** Mark all of the user's unread notifications as read. */
+  async markNotificationsRead() {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('is_read', false);
+    if (error) throw error;
+  },
+
+  /**
+   * Global expense feed across every group the user belongs to (RLS scopes the
+   * rows to the user's groups). Newest first.
+   */
+  async getUserExpensesFeed() {
+    const { data, error } = await supabase
+      .from('expenses')
+      .select(
+        `
+        expense_id,
+        amount,
+        description,
+        category,
+        created_at,
+        group_id,
+        groups ( group_name ),
+        profiles ( full_name )
+      `
+      )
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (error) throw error;
+    return (data || []).map((e: any) => ({
+      expense_id: e.expense_id,
+      amount: e.amount,
+      description: e.description,
+      category: e.category,
+      created_at: e.created_at,
+      group_id: e.group_id,
+      group_name: e.groups?.group_name ?? '',
+      payer_name: e.profiles?.full_name ?? null,
+    }));
+  },
+
+  /**
+   * The user's net balance broken down per group (positive = owed to the user,
+   * negative = the user owes). Reuses the same expense/split/settlement math as
+   * the per-group dashboard.
+   */
+  async getUserDebtsByGroup(userId: string) {
+    // Groups the user is a member of.
+    const { data: memberships, error: mErr } = await supabase
+      .from('group_members')
+      .select('group_id, groups ( group_name )')
+      .eq('user_id', userId);
+    if (mErr) throw mErr;
+
+    const groups = (memberships || []).map((m: any) => ({
+      group_id: m.group_id as string,
+      group_name: m.groups?.group_name ?? '',
+    }));
+    if (groups.length === 0) return [];
+
+    const groupIds = groups.map((g) => g.group_id);
+
+    // Expenses the user paid (with splits), scoped to those groups.
+    const { data: paid } = await supabase
+      .from('expenses')
+      .select('group_id, amount, expense_splits ( user_id, share_amount )')
+      .eq('payer_id', userId)
+      .in('group_id', groupIds);
+
+    // Splits the user owes in expenses paid by others.
+    const { data: owesSplits } = await supabase
+      .from('expense_splits')
+      .select('share_amount, expenses!inner ( group_id, payer_id )')
+      .eq('user_id', userId)
+      .neq('expenses.payer_id', userId)
+      .in('expenses.group_id', groupIds);
+
+    // Confirmed settlements involving the user.
+    const { data: settlements } = await supabase
+      .from('debt_settlements')
+      .select('group_id, debtor_id, creditor_id, amount, status')
+      .in('group_id', groupIds)
+      .eq('status', 'confirmed')
+      .or(`debtor_id.eq.${userId},creditor_id.eq.${userId}`);
+
+    const net: Record<string, number> = {};
+    groupIds.forEach((g) => (net[g] = 0));
+
+    paid?.forEach((exp: any) => {
+      exp.expense_splits?.forEach((s: any) => {
+        if (s.user_id !== userId) net[exp.group_id] = (net[exp.group_id] || 0) + s.share_amount;
+      });
+    });
+    owesSplits?.forEach((s: any) => {
+      const gid = s.expenses?.group_id;
+      if (gid) net[gid] = (net[gid] || 0) - s.share_amount;
+    });
+    settlements?.forEach((s: any) => {
+      if (s.creditor_id === userId) net[s.group_id] = (net[s.group_id] || 0) - s.amount;
+      else if (s.debtor_id === userId) net[s.group_id] = (net[s.group_id] || 0) + s.amount;
+    });
+
+    return groups
+      .map((g) => ({ ...g, net: Math.round(net[g.group_id] || 0) }))
+      .filter((g) => g.net !== 0)
+      .sort((a, b) => b.net - a.net);
   },
 };

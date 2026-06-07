@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import { View, RefreshControl, Alert, TouchableOpacity } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -12,8 +12,10 @@ import {
   ArrowDownLeft,
   Users,
   LogOut,
+  Bell,
 } from 'lucide-react-native';
 import { useHomeDashboard } from '../../src/hooks/useHomeDashboard';
+import { groupService } from '../../src/services/group.service';
 import { useThemeColors, accentGradient } from '../../src/theme';
 import {
   Screen,
@@ -44,9 +46,15 @@ export default function HomeScreen() {
     onRefresh,
   } = useHomeDashboard();
 
+  const [unread, setUnread] = useState(0);
+
   useFocusEffect(
     useCallback(() => {
       fetchData();
+      groupService
+        .getUnreadNotificationCount()
+        .then(setUnread)
+        .catch(() => setUnread(0));
     }, [fetchData])
   );
 
@@ -68,7 +76,21 @@ export default function HomeScreen() {
     <Screen
       title={user?.user_metadata?.full_name || t('common.user')}
       subtitle={t('home.greeting')}
-      headerRight={<IconButton icon={LogOut} onPress={handleSignOut} />}
+      headerRight={
+        <View className="flex-row items-center gap-2">
+          <View>
+            <IconButton icon={Bell} onPress={() => router.push('/notifications')} />
+            {unread > 0 ? (
+              <View className="absolute -right-1 -top-1 h-5 min-w-[20px] items-center justify-center rounded-full border border-surface-glass bg-accent px-1">
+                <GlassText className="font-outfit-bold text-[10px] text-white">
+                  {unread > 9 ? '9+' : unread}
+                </GlassText>
+              </View>
+            ) : null}
+          </View>
+          <IconButton icon={LogOut} onPress={handleSignOut} />
+        </View>
+      }
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
       }

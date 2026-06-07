@@ -1,8 +1,10 @@
 import React from 'react';
-import { View, TouchableOpacity, Alert } from 'react-native';
+import { View, TouchableOpacity, Alert, Share } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { UserPlus, UserMinus, Shield, ShieldCheck } from 'lucide-react-native';
+import { supabase } from '../../../src/api/supabase';
+import { useAuthStore } from '../../../src/store/useAuthStore';
 import { useGroupDetails } from '../../../src/hooks/useGroupDetails';
 import { useThemeColors } from '../../../src/theme';
 import {
@@ -18,19 +20,53 @@ export default function MembersScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const { id } = useLocalSearchParams();
-  const { group, members, loading } = useGroupDetails(id);
+  const { user } = useAuthStore();
+  const { group, members, loading, fetchData } = useGroupDetails(id);
+
+  const isOwnerUser = !!group && group.created_by === user?.id;
 
   if (loading) return <Loader fullscreen />;
 
-  const handleRemoveMember = (memberName: string) => {
-    Alert.alert(t('members.removeTitle'), t('members.removeConfirm', { name: memberName }), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('common.remove'),
-        style: 'destructive',
-        onPress: () => console.log('Remove member'),
-      },
-    ]);
+  const handleInvite = async () => {
+    if (!group?.invite_code) return;
+    try {
+      await Share.share({
+        message: t('members.inviteMessage', {
+          name: group.group_name,
+          code: group.invite_code,
+        }),
+      });
+    } catch {
+      // User dismissed the share sheet — nothing to do.
+    }
+  };
+
+  const handleRemoveMember = (member: { user_id: string; full_name: string | null }) => {
+    Alert.alert(
+      t('members.removeTitle'),
+      t('members.removeConfirm', { name: member.full_name || t('common.user') }),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        {
+          text: t('common.remove'),
+          style: 'destructive',
+          onPress: async () => {
+            const groupId = Array.isArray(id) ? id[0] : id;
+            try {
+              const { error } = await supabase
+                .from('group_members')
+                .delete()
+                .eq('group_id', groupId)
+                .eq('user_id', member.user_id);
+              if (error) throw error;
+              fetchData();
+            } catch (error: any) {
+              Alert.alert(t('common.error'), error.message || t('common.somethingWrong'));
+            }
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -38,7 +74,7 @@ export default function MembersScreen() {
       title={t('members.title')}
       subtitle={group?.group_name}
       showBack
-      headerRight={<IconButton icon={UserPlus} onPress={() => {}} />}
+      headerRight={<IconButton icon={UserPlus} onPress={handleInvite} />}
       contentClassName="px-6 pt-4 pb-32"
     >
       <GlassText variant="caption" className="mb-4 ml-1 tracking-widest">
@@ -72,9 +108,9 @@ export default function MembersScreen() {
               </GlassText>
             </View>
 
-            {!isOwner ? (
+            {isOwnerUser && !isOwner ? (
               <TouchableOpacity
-                onPress={() => handleRemoveMember(member.full_name)}
+                onPress={() => handleRemoveMember(member)}
                 className="h-10 w-10 items-center justify-center rounded-xl border border-danger/20 bg-danger/10"
               >
                 <UserMinus size={18} color={colors.danger} />

@@ -64,7 +64,7 @@ export const useAddExpense = (groupId: string) => {
   const selectAll = () => setSplitPlayers(members.map((m) => m.user_id));
   const deselectAll = () => setSplitPlayers([]);
 
-  const addExpense = async () => {
+  const addExpense = async (category: string = 'others') => {
     if (!description || !amount || !paidBy || splitPlayers.length === 0) {
       Alert.alert(i18n.t('common.error'), i18n.t('addExpense.errIncomplete'));
       return;
@@ -88,7 +88,7 @@ export const useAddExpense = (groupId: string) => {
             amount: amountValue,
             description,
             payer_id: paidBy,
-            category: 'others', // Default for now
+            category,
           },
         ])
         .select()

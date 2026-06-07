@@ -178,7 +178,7 @@ export default function AddExpenseScreen() {
 
       <Button
         title={t('addExpense.save')}
-        onPress={addExpense}
+        onPress={() => addExpense(category)}
         disabled={
           loading || !amount || parseFloat(amount) <= 0 || !description || splitPlayers.length === 0
         }

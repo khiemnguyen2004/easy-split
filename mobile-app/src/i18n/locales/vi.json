@@ -24,6 +24,7 @@
   "tabs": {
     "overview": "Tổng quan",
     "groups": "Nhóm",
+    "debts": "Khoản nợ",
     "notifications": "Thông báo",
     "settings": "Cài đặt"
   },
@@ -33,6 +34,10 @@
     "fullNameLabel": "Họ và tên",
     "fullNamePlaceholder": "Thêm tên của bạn...",
     "forgot": "Quên?",
+    "forgotTitle": "Quên mật khẩu",
+    "forgotNeedEmail": "Vui lòng nhập email của bạn ở trên trước.",
+    "forgotSentTitle": "Đã gửi email",
+    "forgotSentMsg": "Kiểm tra hộp thư để nhận liên kết đặt lại mật khẩu.",
     "login": {
       "welcomeBack": "Chào mừng trở lại!",
       "subtitle": "Đăng nhập để tiếp tục quản lý các khoản chi tiêu của bạn.",
@@ -78,10 +83,14 @@
   "debts": {
     "title": "Khoản nợ",
     "balancedTitle": "Bạn đang rất cân bằng!",
-    "balancedDesc": "Hiện tại bạn không có khoản nợ hay khoản thu nào chờ xử lý."
+    "balancedDesc": "Hiện tại bạn không có khoản nợ hay khoản thu nào chờ xử lý.",
+    "owedToYou": "Bạn được trả",
+    "youOwe": "Bạn cần trả",
+    "byGroup": "Theo nhóm"
   },
   "expenses": {
     "title": "Chi tiêu",
+    "untitled": "Khoản chi",
     "emptyTitle": "Chưa có chi tiêu",
     "emptyDesc": "Các khoản chi tiêu của bạn sẽ xuất hiện ở đây sau khi bạn thêm chúng vào các nhóm."
   },
@@ -89,6 +98,14 @@
     "title": "Thông báo",
     "emptyTitle": "Không có thông báo",
     "emptyDesc": "Bạn sẽ nhận được thông báo khi có chi tiêu mới hoặc lời mời tham gia nhóm."
+  },
+  "notif": {
+    "expenseAddedTitle": "Chi tiêu mới",
+    "expenseAddedBody": "{{actor}} đã thêm chi tiêu vào {{group}}",
+    "settlementSubmittedTitle": "Có người trả nợ",
+    "settlementSubmittedBody": "{{actor}} đã gửi minh chứng thanh toán",
+    "settlementConfirmedTitle": "Đã xác nhận thanh toán",
+    "settlementConfirmedBody": "Khoản thanh toán của bạn đã được xác nhận"
   },
   "createGroup": {
     "successTitle": "Tạo nhóm thành công!",
@@ -136,11 +153,16 @@
     "noExpenses": "Chưa có khoản chi nào được ghi lại.",
     "expenseBy": "Bởi {{name}} • {{date}}",
     "financialStatus": "Tình hình tài chính",
+    "budget": "Ngân sách",
+    "budgetExceeded": "Đã vượt ngân sách",
+    "setBudget": "Đặt ngân sách nhóm",
+    "budgetPrompt": "Nhập ngân sách cho nhóm (VNĐ)",
     "debtSecured": "Bảo mật nợ",
     "settleNow": "Quyết toán ngay",
     "groupFund": "Quỹ chung của nhóm",
-    "fundComingSoon": "Tính năng sắp ra mắt",
-    "fundComingSoonDesc": "Quỹ chung sẽ giúp cả nhóm quản lý các khoản chi tiêu định kỳ dễ dàng hơn."
+    "fundSectionDesc": "Tạo quỹ chung và theo dõi đóng góp của cả nhóm cho một mục tiêu chung.",
+    "openFunds": "Quản lý quỹ",
+    "viewStats": "Xem thống kê"
   },
   "addExpense": {
     "title": "Thêm chi tiêu",
@@ -167,11 +189,11 @@
   },
   "chat": {
     "title": "Thảo luận nhóm",
-    "online": "Trực tuyến",
     "inputPlaceholder": "Gửi tin nhắn..."
   },
   "members": {
     "title": "Thành viên",
+    "inviteMessage": "Tham gia nhóm \"{{name}}\" trên EasySplit bằng mã mời: {{code}}",
     "removeTitle": "Xóa thành viên",
     "removeConfirm": "Bạn có chắc muốn xóa {{name}} khỏi nhóm không?",
     "listCount": "Danh sách ({{count}})",
@@ -221,6 +243,12 @@
     "promptTitle": "Đóng góp quỹ",
     "promptMsg": "Nhập số tiền bạn muốn đóng góp",
     "contribute": "Đóng góp",
+    "contributions": "Đóng góp",
+    "noContribs": "Chưa có đóng góp nào",
+    "confirm": "Xác nhận",
+    "confirmed": "Đã duyệt",
+    "pending": "Chờ duyệt",
+    "confirmedContribution": "Đã xác nhận đóng góp.",
     "errMissing": "Vui lòng nhập tên quỹ và số tiền mục tiêu.",
     "created": "Đã tạo quỹ mới.",
     "errNoAmount": "Vui lòng nhập số tiền đóng góp.",
@@ -283,6 +311,13 @@
     "loginAuth": "Đăng nhập & Xác thực",
     "biometric": "Đăng nhập sinh trắc học",
     "biometricDesc": "Dùng Face ID / vân tay để mở ứng dụng",
+    "biometricPrompt": "Xác nhận để bật khóa sinh trắc học",
+    "biometricUnavailableTitle": "Không dùng được sinh trắc học",
+    "biometricUnavailableMsg": "Thiết bị chưa cài Face ID / vân tay, hoặc bạn đã hủy xác thực.",
+    "unlockPrompt": "Mở khóa EasySplit",
+    "lockedTitle": "EasySplit đang khóa",
+    "lockedDesc": "Xác thực để tiếp tục.",
+    "unlock": "Mở khóa",
     "twoFactor": "Xác thực 2 lớp",
     "twoFactorDesc": "Yêu cầu mã xác nhận khi đăng nhập",
     "missingFields": "Vui lòng điền đầy đủ các trường mật khẩu.",
@@ -317,7 +352,6 @@
     "contactSection": "Liên hệ",
     "emailSupport": "Gửi email hỗ trợ",
     "sendFeedback": "Gửi phản hồi",
-    "rateApp": "Đánh giá ứng dụng",
     "terms": "Điều khoản & Chính sách",
     "feedbackSubject": "Phản hồi EasySplit",
     "faq1q": "Làm sao để chia tiền trong nhóm?",
@@ -328,6 +362,10 @@
     "faq3a": "EasySplit tự động tối ưu số giao dịch cần thiết để mọi người trả nợ cho nhau ít bước nhất. Bạn xem chi tiết ở mục Quyết toán của nhóm.",
     "faq4q": "Dữ liệu của tôi có an toàn không?",
     "faq4a": "Dữ liệu được lưu trữ an toàn và chỉ những thành viên trong nhóm mới xem được thông tin chi tiêu của nhóm đó."
+  },
+  "legal": {
+    "termsTab": "Điều khoản",
+    "privacyTab": "Bảo mật"
   },
   "account": {
     "errNotLoggedIn": "Bạn cần đăng nhập để cập nhật thông tin.",

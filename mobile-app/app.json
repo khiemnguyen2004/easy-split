@@ -31,7 +31,13 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      "expo-font"
+      "expo-font",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Allow EasySplit to use Face ID to unlock the app."
+        }
+      ]
     ],
     "scheme": "easy-split"
   }
