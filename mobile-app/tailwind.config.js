@@ -6,26 +6,31 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Text + dark surfaces. Three shades only — keeps contrast predictable.
+        // Semantic tokens resolve through CSS variables (see global.css) so they
+        // follow the active light/dark color scheme automatically.
+        // Text + content shades. `fill`/`line` derive from the same base, so
+        // they flip to a light tint in dark mode for free.
         content: {
-          DEFAULT: '#1E1B4B',
-          muted: 'rgba(30, 27, 75, 0.55)',
-          faint: 'rgba(30, 27, 75, 0.4)',
+          DEFAULT: 'rgb(var(--c-content) / <alpha-value>)',
+          // Own per-theme vars (not a fixed alpha of content) so dark can be
+          // brighter than light for legibility.
+          muted: 'var(--c-content-muted)',
+          faint: 'var(--c-content-faint)',
         },
         // Glass surfaces. `fill` = subtle inline bg, `line` = hairline border.
         surface: {
-          glass: 'rgba(255, 255, 255, 0.4)',
-          fill: 'rgba(30, 27, 75, 0.05)',
-          line: 'rgba(30, 27, 75, 0.1)',
+          glass: 'var(--c-surface-glass)',
+          fill: 'rgb(var(--c-content) / 0.05)',
+          line: 'rgb(var(--c-content) / 0.1)',
         },
-        // Brand accent (CTA gradient / active / pending).
+        // Brand accent (CTA gradient / active / pending) — same in both themes.
         accent: {
-          DEFAULT: '#FF512F',
-          alt: '#DD2476',
+          DEFAULT: 'rgb(var(--c-accent) / <alpha-value>)',
+          alt: 'rgb(var(--c-accent-alt) / <alpha-value>)',
         },
         // Semantic status.
-        success: '#10B981',
-        danger: '#FB7185',
+        success: 'rgb(var(--c-success) / <alpha-value>)',
+        danger: 'rgb(var(--c-danger) / <alpha-value>)',
       },
       fontFamily: {
         outfit: ['Outfit_400Regular'],

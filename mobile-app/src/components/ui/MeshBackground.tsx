@@ -10,12 +10,15 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import { useEffect } from 'react';
-import { backgroundGradient } from '../../theme';
+import { useThemeStore } from '../../store/useThemeStore';
+import { useBackgroundGradient } from '../../theme';
 
 const { width, height } = Dimensions.get('window');
 
 export const MeshBackground = ({ children }: { children: React.ReactNode }) => {
   const anim = useSharedValue(0);
+  const scheme = useThemeStore((s) => s.scheme);
+  const backgroundGradient = useBackgroundGradient();
 
   useEffect(() => {
     anim.value = withRepeat(
@@ -42,7 +45,7 @@ export const MeshBackground = ({ children }: { children: React.ReactNode }) => {
   }));
 
   return (
-    <View className="flex-1 bg-white">
+    <View className={`flex-1 ${scheme === 'dark' ? 'bg-[#0B0A18]' : 'bg-white'}`}>
       {/* Base Gradient */}
       <LinearGradient
         colors={backgroundGradient}

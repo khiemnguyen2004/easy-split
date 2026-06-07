@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { LucideIcon } from 'lucide-react-native';
-import { colors } from '../../theme';
+import { useThemeColors } from '../../theme';
 import { GlassText } from './GlassText';
 
 type Tone = 'neutral' | 'success' | 'danger' | 'accent';
@@ -14,13 +14,6 @@ interface StatTileProps {
   className?: string;
 }
 
-const TONE: Record<Tone, { badge: string; icon: string }> = {
-  neutral: { badge: 'bg-surface-fill', icon: colors.content },
-  success: { badge: 'bg-success/20', icon: colors.success },
-  danger: { badge: 'bg-danger/20', icon: colors.danger },
-  accent: { badge: 'bg-accent/20', icon: colors.accent },
-};
-
 export const StatTile = ({
   icon: Icon,
   label,
@@ -28,6 +21,13 @@ export const StatTile = ({
   tone = 'neutral',
   className = '',
 }: StatTileProps) => {
+  const colors = useThemeColors();
+  const TONE: Record<Tone, { badge: string; icon: string }> = {
+    neutral: { badge: 'bg-surface-fill', icon: colors.content },
+    success: { badge: 'bg-success/20', icon: colors.success },
+    danger: { badge: 'bg-danger/20', icon: colors.danger },
+    accent: { badge: 'bg-accent/20', icon: colors.accent },
+  };
   const t = TONE[tone];
   return (
     <View
@@ -36,10 +36,16 @@ export const StatTile = ({
       <View className={`mb-3 h-8 w-8 items-center justify-center rounded-lg ${t.badge}`}>
         <Icon size={16} color={t.icon} />
       </View>
-      <GlassText variant="caption" className="mb-1 text-[10px] lowercase">
+      <GlassText
+        variant="caption"
+        className="mb-1 text-[10px] lowercase"
+        style={{ color: colors.contentMuted }}
+      >
         {label}
       </GlassText>
-      <GlassText className="font-outfit-bold text-base">{value}</GlassText>
+      <GlassText className="font-outfit-bold text-base" style={{ color: colors.content }}>
+        {value}
+      </GlassText>
     </View>
   );
 };

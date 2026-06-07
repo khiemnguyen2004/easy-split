@@ -18,7 +18,7 @@ import { useAuthStore } from '../../../src/store/useAuthStore';
 import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
 import { BlurView } from 'expo-blur';
-import { colors } from '../../../src/theme';
+import { useThemeColors } from '../../../src/theme';
 import { GlassText, IconButton, Avatar, Loader } from '../../../src/components/ui';
 
 interface Message {
@@ -34,6 +34,7 @@ interface Message {
 }
 
 export default function ChatScreen() {
+  const colors = useThemeColors();
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { user } = useAuthStore();

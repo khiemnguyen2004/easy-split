@@ -11,7 +11,7 @@ import {
   MoreHorizontal,
 } from 'lucide-react-native';
 import { useAddExpense } from '../../../src/hooks/useAddExpense';
-import { colors } from '../../../src/theme';
+import { useThemeColors } from '../../../src/theme';
 import {
   Screen,
   GlassCard,
@@ -31,6 +31,7 @@ const CATEGORIES = [
 ];
 
 export default function AddExpenseScreen() {
+  const colors = useThemeColors();
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const {

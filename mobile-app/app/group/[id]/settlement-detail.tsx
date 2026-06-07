@@ -6,7 +6,7 @@ import { supabase } from '../../../src/api/supabase';
 import { useAuthStore } from '../../../src/store/useAuthStore';
 import * as ImagePicker from 'expo-image-picker';
 import { decode } from 'base64-arraybuffer';
-import { colors } from '../../../src/theme';
+import { useThemeColors } from '../../../src/theme';
 import { Screen, GlassCard, GlassText, Button, Loader } from '../../../src/components/ui';
 
 interface SimplifiedDebt {
@@ -18,6 +18,7 @@ interface SimplifiedDebt {
 }
 
 export default function SettlementDetailScreen() {
+  const colors = useThemeColors();
   const { id } = useLocalSearchParams();
   const { user } = useAuthStore();
   const [loading, setLoading] = useState(true);

@@ -2,7 +2,7 @@ import React from 'react';
 import { TouchableOpacity, TouchableOpacityProps } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LucideIcon } from 'lucide-react-native';
-import { colors, accentGradient } from '../../theme';
+import { accentGradient, useThemeColors } from '../../theme';
 
 type Variant = 'glass' | 'fab';
 
@@ -24,6 +24,7 @@ export const IconButton = ({
   className = '',
   ...props
 }: IconButtonProps) => {
+  const colors = useThemeColors();
   if (variant === 'fab') {
     return (
       <TouchableOpacity

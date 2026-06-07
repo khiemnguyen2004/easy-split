@@ -1,9 +1,11 @@
 import React, { useCallback } from 'react';
-import { View, RefreshControl, Alert } from 'react-native';
+import { View, RefreshControl, Alert, TouchableOpacity } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { getGroupBgImage } from '../../src/utils/image';
 import {
   Plus,
-  UserPlus,
+  LogIn,
   Wallet,
   ArrowUpRight,
   ArrowDownLeft,
@@ -11,7 +13,7 @@ import {
   LogOut,
 } from 'lucide-react-native';
 import { useHomeDashboard } from '../../src/hooks/useHomeDashboard';
-import { colors } from '../../src/theme';
+import { useThemeColors, accentGradient } from '../../src/theme';
 import {
   Screen,
   GlassCard,
@@ -25,6 +27,7 @@ import {
 } from '../../src/components/ui';
 
 export default function HomeScreen() {
+  const colors = useThemeColors();
   const router = useRouter();
   const {
     user,
@@ -68,14 +71,27 @@ export default function HomeScreen() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
       }
       overlay={
-        <View className="absolute bottom-28 right-6 flex-col gap-4">
+        <View className="absolute bottom-32 right-6 flex-col gap-4 items-end">
           <IconButton
-            icon={UserPlus}
+            icon={LogIn}
             iconSize={24}
             onPress={() => router.push('/join-group')}
             className="h-14 w-14 rounded-2xl shadow-xl"
           />
-          <IconButton icon={Plus} variant="fab" onPress={() => router.push('/create-group')} />
+          <TouchableOpacity
+            onPress={() => router.push('/create-group')}
+            activeOpacity={0.85}
+            className="h-14 w-14 overflow-hidden rounded-2xl shadow-xl shadow-accent/30"
+          >
+            <LinearGradient
+              colors={accentGradient}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              className="flex-1 items-center justify-center"
+            >
+              <Plus size={24} color={colors.white} />
+            </LinearGradient>
+          </TouchableOpacity>
         </View>
       }
     >
@@ -132,6 +148,7 @@ export default function HomeScreen() {
             key={item.group_id}
             icon={Users}
             title={item.group_name}
+            backgroundImageUri={getGroupBgImage(item.group_id)}
             onPress={() => router.push(`/group/${item.group_id}`)}
             className="mb-4"
             subtitle={

@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import { View, TouchableOpacity, RefreshControl, Clipboard } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getGroupBgImage } from '../../src/utils/image';
 import {
   Settings,
   Receipt,
@@ -16,7 +17,7 @@ import {
 } from 'lucide-react-native';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useGroupDetails } from '../../src/hooks/useGroupDetails';
-import { colors } from '../../src/theme';
+import { useThemeColors } from '../../src/theme';
 import {
   Screen,
   GlassCard,
@@ -46,6 +47,7 @@ const BALANCE_TONE = {
 };
 
 export default function GroupDetailsScreen() {
+  const colors = useThemeColors();
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { user } = useAuthStore();
@@ -103,7 +105,7 @@ export default function GroupDetailsScreen() {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.accent} />
       }
       overlay={
-        <View className="absolute bottom-8 right-6">
+        <View className="absolute bottom-12 right-6">
           <IconButton
             icon={Plus}
             variant="fab"
@@ -113,7 +115,7 @@ export default function GroupDetailsScreen() {
         </View>
       }
     >
-      <GlassCard intensity={45} className="mb-8">
+      <GlassCard intensity={45} className="mb-8" backgroundImageUri={getGroupBgImage(id as string)}>
         <View className="mb-6 flex-row items-start justify-between">
           <View>
             <GlassText variant="caption" className="mb-2">

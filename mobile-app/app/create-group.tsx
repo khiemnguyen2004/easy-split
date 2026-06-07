@@ -5,10 +5,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Users, FileText, Copy, Check, Wallet } from 'lucide-react-native';
 import * as Clipboard from 'expo-clipboard';
 import { useCreateGroup } from '../src/hooks/useCreateGroup';
-import { colors } from '../src/theme';
+import { useThemeColors } from '../src/theme';
 import { GlassCard, GlassText, GlassHeader, Input, Button } from '../src/components/ui';
 
 export default function CreateGroupScreen() {
+  const colors = useThemeColors();
   const router = useRouter();
   const [groupName, setGroupName] = useState('');
   const [description, setDescription] = useState('');

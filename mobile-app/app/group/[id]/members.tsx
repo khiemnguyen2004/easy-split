@@ -3,7 +3,7 @@ import { View, TouchableOpacity, Alert } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { UserPlus, UserMinus, Shield, ShieldCheck } from 'lucide-react-native';
 import { useGroupDetails } from '../../../src/hooks/useGroupDetails';
-import { colors } from '../../../src/theme';
+import { useThemeColors } from '../../../src/theme';
 import {
   Screen,
   GlassCard,
@@ -14,6 +14,7 @@ import {
 } from '../../../src/components/ui';
 
 export default function MembersScreen() {
+  const colors = useThemeColors();
   const { id } = useLocalSearchParams();
   const { group, members, loading } = useGroupDetails(id);
 

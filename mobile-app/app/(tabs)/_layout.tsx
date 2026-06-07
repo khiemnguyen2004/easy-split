@@ -3,9 +3,12 @@ import { Home, Users, Receipt, Settings, Bell } from 'lucide-react-native';
 import { View, Pressable, Text, StyleSheet } from 'react-native';
 import { BlurView } from 'expo-blur';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { colors } from '../../src/theme';
+import { useThemeColors } from '../../src/theme';
+import { useThemeStore } from '../../src/store/useThemeStore';
 
 function GlassTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const colors = useThemeColors();
+  const isDark = useThemeStore((s) => s.scheme) === 'dark';
   return (
     <View
       style={{
@@ -16,18 +19,18 @@ function GlassTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         height: 72,
         borderRadius: 36,
         flexDirection: 'row',
-        backgroundColor: 'rgba(255, 255, 255, 0.4)',
+        backgroundColor: isDark ? 'rgba(28, 25, 51, 0.55)' : 'rgba(255, 255, 255, 0.4)',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.4)',
-        shadowColor: colors.content,
+        borderColor: isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.4)',
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.1,
+        shadowOpacity: isDark ? 0.4 : 0.1,
         shadowRadius: 16,
       }}
     >
       <BlurView
         intensity={85}
-        tint="light"
+        tint={isDark ? 'dark' : 'light'}
         style={{ ...StyleSheet.absoluteFillObject, borderRadius: 36, overflow: 'hidden' }}
       />
 
@@ -73,6 +76,11 @@ function GlassTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 }
 
 export default function TabLayout() {
+  const colors = useThemeColors();
+  const isDark = useThemeStore((s) => s.scheme) === 'dark';
+  // The FAB circle is `bg-content`, which is dark in light mode (→ white icon)
+  // but light in dark mode (→ needs a dark icon to stay visible).
+  const fabIconColor = isDark ? '#15132E' : colors.white;
   return (
     <Tabs tabBar={(props) => <GlassTabBar {...props} />} screenOptions={{ headerShown: false }}>
       <Tabs.Screen
@@ -95,7 +103,7 @@ export default function TabLayout() {
         options={{
           tabBarIcon: () => (
             <View className="h-12 w-12 items-center justify-center rounded-full bg-content shadow-lg shadow-content/30">
-              <Receipt size={22} color={colors.white} />
+              <Receipt size={22} color={fabIconColor} />
             </View>
           ),
         }}

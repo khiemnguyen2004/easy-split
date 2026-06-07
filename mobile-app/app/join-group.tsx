@@ -2,10 +2,11 @@ import React from 'react';
 import { View, TextInput } from 'react-native';
 import { UserPlus, Hash } from 'lucide-react-native';
 import { useJoinGroup } from '../src/hooks/useJoinGroup';
-import { colors } from '../src/theme';
+import { useThemeColors } from '../src/theme';
 import { Screen, GlassCard, GlassText, Button } from '../src/components/ui';
 
 export default function JoinGroupScreen() {
+  const colors = useThemeColors();
   const { inviteCode, setInviteCode, joinGroup, loading } = useJoinGroup();
 
   return (

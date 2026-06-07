@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { LucideIcon } from 'lucide-react-native';
-import { colors, accentGradient } from '../../theme';
+import { accentGradient, useThemeColors } from '../../theme';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
@@ -31,13 +31,6 @@ const TEXT_COLOR: Record<Variant, string> = {
   danger: 'text-white',
 };
 
-const ICON_COLOR: Record<Variant, string> = {
-  primary: colors.white,
-  secondary: colors.content,
-  ghost: colors.content,
-  danger: colors.white,
-};
-
 export const Button = ({
   title,
   variant = 'primary',
@@ -50,6 +43,13 @@ export const Button = ({
   disabled,
   ...props
 }: ButtonProps) => {
+  const colors = useThemeColors();
+  const ICON_COLOR: Record<Variant, string> = {
+    primary: colors.white,
+    secondary: colors.content,
+    ghost: colors.content,
+    danger: colors.white,
+  };
   const isDisabled = disabled || loading;
 
   const content = children ?? (

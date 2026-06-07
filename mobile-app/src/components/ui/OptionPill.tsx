@@ -1,7 +1,7 @@
 import React from 'react';
 import { TouchableOpacity, View } from 'react-native';
 import { LucideIcon, Check } from 'lucide-react-native';
-import { colors } from '../../theme';
+import { useThemeColors } from '../../theme';
 import { GlassText } from './GlassText';
 
 interface OptionPillProps {
@@ -22,6 +22,7 @@ export const OptionPill = ({
   showCheck = false,
   className = '',
 }: OptionPillProps) => {
+  const colors = useThemeColors();
   return (
     <TouchableOpacity
       onPress={onPress}

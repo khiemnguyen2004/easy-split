@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { LucideIcon } from 'lucide-react-native';
-import { colors } from '../../theme';
+import { useThemeColors } from '../../theme';
 import { GlassCard } from './GlassCard';
 import { GlassText } from './GlassText';
 import { Button } from './Button';
@@ -26,6 +26,7 @@ export const EmptyState = ({
   action,
   className = '',
 }: EmptyStateProps) => {
+  const colors = useThemeColors();
   return (
     <GlassCard
       intensity={20}

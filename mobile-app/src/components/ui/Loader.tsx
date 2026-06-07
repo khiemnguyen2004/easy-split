@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, ActivityIndicator } from 'react-native';
-import { colors } from '../../theme';
+import { useThemeColors } from '../../theme';
 
 interface LoaderProps {
   /** Fill the screen and center vertically. */
@@ -10,6 +10,7 @@ interface LoaderProps {
 }
 
 export const Loader = ({ fullscreen = false, size = 'large', className = '' }: LoaderProps) => {
+  const colors = useThemeColors();
   if (fullscreen) {
     return (
       <View className={`flex-1 items-center justify-center ${className}`}>

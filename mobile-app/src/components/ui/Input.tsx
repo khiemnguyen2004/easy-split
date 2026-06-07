@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, TextInputProps } from 'react-native';
 import { LucideIcon, Eye, EyeOff } from 'lucide-react-native';
-import { colors } from '../../theme';
+import { useThemeColors } from '../../theme';
 import { GlassText } from './GlassText';
 
 interface InputProps extends TextInputProps {
@@ -33,6 +33,7 @@ export const Input = ({
   className = '',
   ...props
 }: InputProps) => {
+  const colors = useThemeColors();
   const [hidden, setHidden] = useState(true);
 
   if (variant === 'amount') {

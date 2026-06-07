@@ -4,7 +4,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Plus, UserPlus, Users, Search, Users2 } from 'lucide-react-native';
 import { useGroupList } from '../../src/hooks/useGroupList';
-import { colors } from '../../src/theme';
+import { useThemeColors } from '../../src/theme';
 import {
   GlassText,
   GlassHeader,
@@ -18,6 +18,7 @@ import {
 } from '../../src/components/ui';
 
 export default function GroupsScreen() {
+  const colors = useThemeColors();
   const router = useRouter();
   const { filteredGroups, loading, refreshing, searchQuery, fetchGroups, onRefresh, handleSearch } =
     useGroupList();

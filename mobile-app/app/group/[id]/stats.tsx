@@ -4,12 +4,13 @@ import { useLocalSearchParams } from 'expo-router';
 import { BarChart, PieChart } from 'react-native-chart-kit';
 import { TrendingUp, PieChart as PieIcon, BarChart3, Receipt } from 'lucide-react-native';
 import { useGroupDetails } from '../../../src/hooks/useGroupDetails';
-import { colors } from '../../../src/theme';
+import { useThemeColors } from '../../../src/theme';
 import { Screen, GlassCard, GlassText, ListItem, Loader } from '../../../src/components/ui';
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function StatsScreen() {
+  const colors = useThemeColors();
   const { id } = useLocalSearchParams();
   const { expenses, members, loading } = useGroupDetails(id);
 

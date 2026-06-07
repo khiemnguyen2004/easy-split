@@ -1,7 +1,8 @@
 import React from 'react';
-import { View, TouchableOpacity } from 'react-native';
-import { LucideIcon, ChevronRight } from 'lucide-react-native';
-import { colors } from '../../theme';
+import { View, Pressable } from 'react-native';
+import { LucideIcon } from 'lucide-react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { useThemeColors } from '../../theme';
 import { GlassCard } from './GlassCard';
 import { GlassText } from './GlassText';
 
@@ -11,11 +12,12 @@ interface ListItemProps {
   leading?: React.ReactNode;
   title: string;
   subtitle?: React.ReactNode;
-  /** Custom trailing element; defaults to a chevron when `onPress` is set. */
+  /** Custom trailing element. */
   trailing?: React.ReactNode;
   onPress?: () => void;
   intensity?: number;
   className?: string;
+  backgroundImageUri?: string;
 }
 
 export const ListItem = ({
@@ -27,16 +29,32 @@ export const ListItem = ({
   onPress,
   intensity = 25,
   className = '',
+  backgroundImageUri,
 }: ListItemProps) => {
-  const trailingNode =
-    trailing !== undefined ? (
-      trailing
-    ) : onPress ? (
-      <ChevronRight size={18} color={colors.contentFaint} />
-    ) : null;
+  const colors = useThemeColors();
+  const scale = useSharedValue(1);
+
+  const trailingNode = trailing !== undefined ? trailing : null;
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.97, { damping: 15, stiffness: 220 });
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1, { damping: 15, stiffness: 220 });
+  };
 
   const body = (
-    <GlassCard intensity={intensity} padding="p-5" className={`flex-row items-center ${className}`}>
+    <GlassCard
+      intensity={intensity}
+      padding="p-5"
+      backgroundImageUri={backgroundImageUri}
+      className={`flex-row items-center ${className}`}
+    >
       {leading ??
         (Icon ? (
           <View className="mr-4 h-14 w-14 items-center justify-center rounded-2xl border border-surface-line bg-surface-fill">
@@ -60,8 +78,13 @@ export const ListItem = ({
   if (!onPress) return body;
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.85}>
-      {body}
-    </TouchableOpacity>
+    <Pressable
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}
+    >
+      <Animated.View style={animatedStyle}>{body}</Animated.View>
+    </Pressable>
   );
 };
