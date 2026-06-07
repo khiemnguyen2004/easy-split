@@ -1,9 +1,10 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { View, TouchableOpacity, RefreshControl, Clipboard, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '../../src/api/supabase';
+import { groupService } from '../../src/services/group.service';
 import { getGroupBgImage } from '../../src/utils/image';
 import { formatCurrency, formatDate, formatNumber, parseAmount } from '../../src/utils/format';
 import { getErrorMessage } from '../../src/utils/error';
@@ -66,6 +67,7 @@ export default function GroupDetailsScreen() {
 
   const [activeTab, setActiveTab] = useState<'expenses' | 'settlements' | 'funds'>('expenses');
   const [copied, setCopied] = useState(false);
+  const [chatUnread, setChatUnread] = useState(0);
 
   const {
     group,
@@ -82,8 +84,37 @@ export default function GroupDetailsScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchData();
-    }, [fetchData])
+      const groupId = Array.isArray(id) ? id[0] : id;
+      if (groupId) {
+        groupService
+          .getGroupChatUnreadCount(groupId)
+          .then(setChatUnread)
+          .catch(() => setChatUnread(0));
+      }
+    }, [fetchData, id])
   );
+
+  // Live-bump the chat badge when another member sends a message while this
+  // screen is open (focus recompute only runs on (re)entry). Requires Realtime
+  // to be enabled for `messages` (migration 20260322000000).
+  useEffect(() => {
+    const groupId = Array.isArray(id) ? id[0] : id;
+    if (!groupId || !user?.id) return;
+    const channel = supabase
+      .channel(`group_badge:${groupId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages', filter: `group_id=eq.${groupId}` },
+        (payload) => {
+          const senderId = (payload.new as { sender_id?: string }).sender_id;
+          if (senderId && senderId !== user.id) setChatUnread((c) => c + 1);
+        }
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [id, user?.id]);
 
   const copyInviteCode = () => {
     if (group?.invite_code) {
@@ -145,7 +176,16 @@ export default function GroupDetailsScreen() {
       headerRight={
         <View className="flex-row items-center gap-2">
           <IconButton icon={BarChart3} onPress={() => router.push(`/group/${id}/stats`)} />
-          <IconButton icon={MessageCircle} onPress={() => router.push(`/group/${id}/chat`)} />
+          <View>
+            <IconButton icon={MessageCircle} onPress={() => router.push(`/group/${id}/chat`)} />
+            {chatUnread > 0 ? (
+              <View className="absolute -right-1 -top-1 h-5 min-w-[20px] items-center justify-center rounded-full border border-surface-glass bg-accent px-1">
+                <GlassText className="font-outfit-bold text-[10px] text-white">
+                  {chatUnread > 9 ? '9+' : chatUnread}
+                </GlassText>
+              </View>
+            ) : null}
+          </View>
           <IconButton icon={Settings} onPress={() => router.push(`/group/${id}/members`)} />
         </View>
       }

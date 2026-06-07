@@ -105,7 +105,9 @@
     "settlementSubmittedTitle": "Có người trả nợ",
     "settlementSubmittedBody": "{{actor}} đã gửi minh chứng thanh toán",
     "settlementConfirmedTitle": "Đã xác nhận thanh toán",
-    "settlementConfirmedBody": "Khoản thanh toán của bạn đã được xác nhận"
+    "settlementConfirmedBody": "Khoản thanh toán của bạn đã được xác nhận",
+    "messageReceivedTitle": "Tin nhắn mới",
+    "messageReceivedBody": "{{actor}} đã nhắn trong {{group}}"
   },
   "createGroup": {
     "successTitle": "Tạo nhóm thành công!",
@@ -215,7 +217,8 @@
     "nettingInfo": "Hệ thống sử dụng thuật toán bù trừ nợ tự động (Netting) để tối thiểu hóa số lần chuyển khoản giữa các thành viên.",
     "notDebtor": "Bạn không phải là người nợ trong giao dịch này.",
     "proofUploaded": "Đã tải lên minh chứng. Chờ người nhận xác nhận.",
-    "confirmedPay": "Đã xác nhận thanh toán."
+    "confirmedPay": "Đã xác nhận thanh toán.",
+    "confirmDenied": "Chỉ người nhận tiền mới xác nhận được khoản này."
   },
   "stats": {
     "title": "Thống kê",

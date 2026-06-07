@@ -2,7 +2,7 @@ import React, { useCallback } from 'react';
 import { View, RefreshControl, TouchableOpacity } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { BellOff, Receipt, Wallet, Bell } from 'lucide-react-native';
+import { BellOff, Receipt, Wallet, Bell, MessageCircle } from 'lucide-react-native';
 import { useNotifications, AppNotification } from '../src/hooks/useNotifications';
 import { useThemeColors } from '../src/theme';
 import { Screen, GlassCard, GlassText, EmptyState, Loader } from '../src/components/ui';
@@ -47,6 +47,15 @@ export default function NotificationsScreen() {
           icon: Wallet,
           title: t('notif.settlementConfirmedTitle'),
           body: t('notif.settlementConfirmedBody'),
+        };
+      case 'message_received':
+        return {
+          icon: MessageCircle,
+          title: t('notif.messageReceivedTitle'),
+          body: t('notif.messageReceivedBody', {
+            actor: p.actor || t('common.user'),
+            group: p.group_name || '',
+          }),
         };
       default:
         return { icon: Bell, title: n.title, body: n.message };

@@ -105,7 +105,9 @@
     "settlementSubmittedTitle": "Payment submitted",
     "settlementSubmittedBody": "{{actor}} sent a payment proof",
     "settlementConfirmedTitle": "Payment confirmed",
-    "settlementConfirmedBody": "Your payment has been confirmed"
+    "settlementConfirmedBody": "Your payment has been confirmed",
+    "messageReceivedTitle": "New message",
+    "messageReceivedBody": "{{actor}} messaged in {{group}}"
   },
   "createGroup": {
     "successTitle": "Group created!",
@@ -215,7 +217,8 @@
     "nettingInfo": "The system uses an automatic debt-netting algorithm to minimize the number of transfers between members.",
     "notDebtor": "You are not the debtor in this transaction.",
     "proofUploaded": "Proof uploaded. Waiting for the recipient to confirm.",
-    "confirmedPay": "Payment confirmed."
+    "confirmedPay": "Payment confirmed.",
+    "confirmDenied": "Only the recipient can confirm this payment."
   },
   "stats": {
     "title": "Statistics",

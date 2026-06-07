@@ -22,7 +22,14 @@ import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../../src/theme';
 import { formatTime } from '../../../src/utils/format';
 import { getErrorMessage } from '../../../src/utils/error';
+import { groupService } from '../../../src/services/group.service';
 import type { ChatMessage } from '../../../src/types/models';
+
+const MESSAGE_SELECT = `
+  *,
+  profiles(full_name, avatar_url),
+  media(*)
+`;
 import { GlassText, IconButton, Avatar, Loader } from '../../../src/components/ui';
 
 export default function ChatScreen() {
@@ -39,24 +46,44 @@ export default function ChatScreen() {
   const flatListRef = useRef<FlatList>(null);
 
   useEffect(() => {
-    if (id) {
-      fetchMessages();
-      subscribeToMessages();
-    }
+    if (!id) return;
+    const groupId = Array.isArray(id) ? id[0] : id;
+    fetchMessages();
+    // Clear this group's chat notifications on open and again on leave (covers
+    // messages that arrived while viewing) so the badge / bell reflect reality.
+    groupService.markGroupChatRead(groupId).catch(() => {});
+    const unsubscribe = subscribeToMessages();
+    return () => {
+      unsubscribe();
+      groupService.markGroupChatRead(groupId).catch(() => {});
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
+
+  /** Append a message only if it isn't already in the list (avoids duplicates
+   *  from the optimistic send + the realtime echo). */
+  const upsertMessage = (msg: ChatMessage) => {
+    setMessages((prev) =>
+      prev.some((m) => m.message_id === msg.message_id) ? prev : [...prev, msg]
+    );
+    setTimeout(() => flatListRef.current?.scrollToEnd(), 100);
+  };
+
+  const fetchMessageById = async (messageId: string): Promise<ChatMessage | null> => {
+    const { data } = await supabase
+      .from('messages')
+      .select(MESSAGE_SELECT)
+      .eq('message_id', messageId)
+      .single();
+    return data ? (data as unknown as ChatMessage) : null;
+  };
 
   const fetchMessages = async () => {
     try {
       const groupId = Array.isArray(id) ? id[0] : id;
       const { data, error } = await supabase
         .from('messages')
-        .select(
-          `
-          *,
-          profiles(full_name, avatar_url),
-          media(*)
-        `
-        )
+        .select(MESSAGE_SELECT)
         .eq('group_id', groupId)
         .order('created_at', { ascending: true });
 
@@ -82,22 +109,8 @@ export default function ChatScreen() {
           filter: `group_id=eq.${groupId}`,
         },
         async (payload) => {
-          const { data } = await supabase
-            .from('messages')
-            .select(
-              `
-              *,
-              profiles(full_name, avatar_url),
-              media(*)
-            `
-            )
-            .eq('message_id', payload.new.message_id)
-            .single();
-
-          if (data) {
-            setMessages((prev) => [...prev, data as unknown as ChatMessage]);
-            setTimeout(() => flatListRef.current?.scrollToEnd(), 100);
-          }
+          const data = await fetchMessageById(payload.new.message_id);
+          if (data) upsertMessage(data);
         }
       )
       .subscribe();
@@ -164,6 +177,11 @@ export default function ChatScreen() {
 
       setInputText('');
       setImages([]);
+
+      // Show the message immediately instead of waiting for the realtime echo
+      // (which may be disabled). Deduped against the echo by message_id.
+      const sent = await fetchMessageById(msgData.message_id);
+      if (sent) upsertMessage(sent);
     } catch (error) {
       Alert.alert(t('common.error'), getErrorMessage(error));
     } finally {

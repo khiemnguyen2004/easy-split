@@ -186,12 +186,15 @@ export default function SettlementDetailScreen() {
   const handleConfirmPay = async (settlementId: string) => {
     setSubmitting(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('debt_settlements')
         .update({ status: 'confirmed' })
-        .eq('settlement_id', settlementId);
+        .eq('settlement_id', settlementId)
+        .select('settlement_id');
 
       if (error) throw error;
+      // RLS may silently match 0 rows; treat that as a real failure.
+      if (!data || data.length === 0) throw new Error(t('settlement.confirmDenied'));
       Alert.alert(t('common.success'), t('settlement.confirmedPay'));
       fetchData();
     } catch (error) {

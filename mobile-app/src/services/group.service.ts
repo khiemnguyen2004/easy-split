@@ -401,6 +401,29 @@ export const groupService = {
     return count || 0;
   },
 
+  /** Count unread chat-message notifications for a specific group (server truth). */
+  async getGroupChatUnreadCount(groupId: string) {
+    const { count, error } = await supabase
+      .from('notifications')
+      .select('notification_id', { count: 'exact', head: true })
+      .eq('is_read', false)
+      .filter('data->>type', 'eq', 'message_received')
+      .filter('data->>group_id', 'eq', groupId);
+    if (error) throw error;
+    return count || 0;
+  },
+
+  /** Mark a group's chat-message notifications as read (when the user opens chat). */
+  async markGroupChatRead(groupId: string) {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ is_read: true })
+      .eq('is_read', false)
+      .filter('data->>type', 'eq', 'message_received')
+      .filter('data->>group_id', 'eq', groupId);
+    if (error) throw error;
+  },
+
   /** Mark all of the user's unread notifications as read. */
   async markNotificationsRead() {
     const { error } = await supabase
