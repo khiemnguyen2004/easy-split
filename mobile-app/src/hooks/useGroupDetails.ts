@@ -1,6 +1,13 @@
 import { useState, useCallback, useEffect } from 'react';
 import { groupService } from '../services/group.service';
-import type { Group, GroupMember, GroupExpense, NetBalance, Fund } from '../types/models';
+import type {
+  Group,
+  GroupMember,
+  GroupExpense,
+  NetBalance,
+  Fund,
+  DebtSettlementRow,
+} from '../types/models';
 
 export const useGroupDetails = (id: string | string[] | undefined) => {
   const [group, setGroup] = useState<Group | null>(null);
@@ -8,6 +15,7 @@ export const useGroupDetails = (id: string | string[] | undefined) => {
   const [expenses, setExpenses] = useState<GroupExpense[]>([]);
   const [netBalances, setNetBalances] = useState<NetBalance[]>([]);
   const [funds, setFunds] = useState<Fund[]>([]);
+  const [pendingSettlements, setPendingSettlements] = useState<DebtSettlementRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -26,6 +34,7 @@ export const useGroupDetails = (id: string | string[] | undefined) => {
       setExpenses(data.expenses);
       setNetBalances(data.netBalances);
       setFunds(data.fundings);
+      setPendingSettlements(data.pendingSettlements);
     } catch (error) {
       console.error('Error fetching group details:', error);
     } finally {
@@ -49,6 +58,7 @@ export const useGroupDetails = (id: string | string[] | undefined) => {
     expenses,
     netBalances,
     funds,
+    pendingSettlements,
     loading,
     refreshing,
     fetchData,

@@ -289,12 +289,20 @@ export const groupService = {
       .eq('group_id', groupId)
       .order('created_at', { ascending: false });
 
+    // 6. Pending settlements (proof submitted, awaiting confirmation)
+    const { data: pendingData } = await supabase
+      .from('debt_settlements')
+      .select('*')
+      .eq('group_id', groupId)
+      .eq('status', 'pending');
+
     return {
       group: groupData,
       members,
       expenses,
       netBalances: finalNetBalances,
       fundings: fundingsData ?? [],
+      pendingSettlements: pendingData ?? [],
     };
   },
 

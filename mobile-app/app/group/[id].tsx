@@ -1,13 +1,24 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { View, TouchableOpacity, RefreshControl, Clipboard, Alert } from 'react-native';
+import {
+  View,
+  TouchableOpacity,
+  RefreshControl,
+  Clipboard,
+  Alert,
+  Image,
+  Modal,
+} from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
+import * as ImagePicker from 'expo-image-picker';
+import { decode } from 'base64-arraybuffer';
 import { supabase } from '../../src/api/supabase';
 import { groupService } from '../../src/services/group.service';
 import { getGroupBgImage } from '../../src/utils/image';
 import { formatCurrency, formatDate, formatNumber, parseAmount } from '../../src/utils/format';
 import { getErrorMessage } from '../../src/utils/error';
+import { simplifyDebts } from '../../src/utils/debts';
 import { EXPENSE_CATEGORY_IDS } from '../../src/constants';
 import {
   Settings,
@@ -21,6 +32,12 @@ import {
   ShieldCheck,
   Check,
   BarChart3,
+  ArrowUpRight,
+  ArrowDownLeft,
+  Eye,
+  Camera,
+  Clock,
+  X,
 } from 'lucide-react-native';
 import { useAuthStore } from '../../src/store/useAuthStore';
 import { useGroupDetails } from '../../src/hooks/useGroupDetails';
@@ -44,20 +61,6 @@ const TABS = [
   { id: 'funds', labelKey: 'tabFunds', icon: PiggyBank },
 ] as const;
 
-const BALANCE_TONE = {
-  positive: {
-    badge: 'bg-success/20 border-success/20',
-    text: 'text-success',
-    labelKey: 'balanceOwed',
-  },
-  negative: { badge: 'bg-danger/20 border-danger/20', text: 'text-danger', labelKey: 'balanceOwe' },
-  zero: {
-    badge: 'bg-surface-fill border-surface-line',
-    text: 'text-content-faint',
-    labelKey: 'balanceEven',
-  },
-};
-
 export default function GroupDetailsScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -68,6 +71,8 @@ export default function GroupDetailsScreen() {
   const [activeTab, setActiveTab] = useState<'expenses' | 'settlements' | 'funds'>('expenses');
   const [copied, setCopied] = useState(false);
   const [chatUnread, setChatUnread] = useState(0);
+  const [settling, setSettling] = useState(false);
+  const [proofUrl, setProofUrl] = useState<string | null>(null);
 
   const {
     group,
@@ -75,6 +80,7 @@ export default function GroupDetailsScreen() {
     expenses,
     netBalances,
     funds,
+    pendingSettlements,
     loading,
     refreshing,
     fetchData,
@@ -152,6 +158,69 @@ export default function GroupDetailsScreen() {
       'numeric'
     );
 
+  // Debtor uploads a payment proof → creates a pending settlement to the creditor.
+  const handlePayDebt = async (creditorId: string, amount: number) => {
+    if (!user?.id) return;
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.5,
+      base64: true,
+    });
+    if (result.canceled || !result.assets[0].base64) return;
+
+    setSettling(true);
+    try {
+      const groupId = Array.isArray(id) ? id[0] : id;
+      const fileExt = result.assets[0].uri.split('.').pop();
+      const filePath = `settlements/${Math.random()}.${fileExt}`;
+      const { error: uploadError } = await supabase.storage
+        .from('attachments')
+        .upload(filePath, decode(result.assets[0].base64), { contentType: `image/${fileExt}` });
+      if (uploadError) throw uploadError;
+
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from('attachments').getPublicUrl(filePath);
+
+      const { error } = await supabase.from('debt_settlements').insert({
+        group_id: groupId,
+        debtor_id: user.id,
+        creditor_id: creditorId,
+        amount,
+        status: 'pending',
+        proof_image_url: publicUrl,
+      });
+      if (error) throw error;
+      Alert.alert(t('common.success'), t('settlement.proofUploaded'));
+      fetchData();
+    } catch (error) {
+      Alert.alert(t('common.error'), getErrorMessage(error));
+    } finally {
+      setSettling(false);
+    }
+  };
+
+  // Creditor confirms they received the money → settlement becomes confirmed.
+  const handleConfirmDebt = async (settlementId: string) => {
+    setSettling(true);
+    try {
+      const { data, error } = await supabase
+        .from('debt_settlements')
+        .update({ status: 'confirmed' })
+        .eq('settlement_id', settlementId)
+        .select('settlement_id');
+      if (error) throw error;
+      if (!data || data.length === 0) throw new Error(t('settlement.confirmDenied'));
+      Alert.alert(t('common.success'), t('settlement.confirmedPay'));
+      fetchData();
+    } catch (error) {
+      Alert.alert(t('common.error'), getErrorMessage(error));
+    } finally {
+      setSettling(false);
+    }
+  };
+
   if (loading) return <Loader fullscreen />;
 
   if (!group) {
@@ -168,6 +237,11 @@ export default function GroupDetailsScreen() {
   const totalGroupExpense = expenses.reduce((sum, exp) => sum + exp.amount, 0);
   const budgetAmount = Number(group.budget_amount ?? 0);
   const budgetProgress = budgetAmount > 0 ? totalGroupExpense / budgetAmount : 0;
+
+  // Personalized "who pays whom" for the current user.
+  const simplified = simplifyDebts(netBalances);
+  const myDebts = simplified.filter((d) => d.from_id === user?.id);
+  const myCredits = simplified.filter((d) => d.to_id === user?.id);
 
   return (
     <Screen
@@ -360,62 +434,129 @@ export default function GroupDetailsScreen() {
 
       {activeTab === 'settlements' ? (
         <View>
-          <View className="mb-6 flex-row items-center justify-between">
-            <GlassText variant="h3">{t('groupDetail.financialStatus')}</GlassText>
-            <View className="flex-row items-center rounded-full border border-success/20 bg-success/10 px-3 py-1.5">
-              <ShieldCheck size={14} color={colors.success} />
-              <GlassText className="ml-1.5 font-outfit-bold text-[10px] uppercase tracking-tighter text-success">
-                {t('groupDetail.debtSecured')}
-              </GlassText>
-            </View>
-          </View>
-
-          <GlassCard intensity={25} className="mb-8" padding="p-0">
-            {netBalances.map((item, index) => {
-              const tone =
-                item.amount === 0
-                  ? BALANCE_TONE.zero
-                  : item.amount > 0
-                    ? BALANCE_TONE.positive
-                    : BALANCE_TONE.negative;
-              return (
-                <View
-                  key={item.user_id}
-                  className={`flex-row items-center p-5 ${
-                    index !== netBalances.length - 1 ? 'border-b border-surface-line' : ''
-                  }`}
-                >
-                  <View
-                    className={`mr-4 h-12 w-12 items-center justify-center rounded-2xl border ${tone.badge}`}
-                  >
-                    <GlassText className={`font-outfit-bold text-lg ${tone.text}`}>
-                      {item.full_name?.charAt(0)}
-                    </GlassText>
-                  </View>
-                  <View className="flex-1">
-                    <GlassText className="mb-0.5 font-outfit-bold text-base">
-                      {item.full_name} {item.user_id === user?.id ? t('common.you') : ''}
-                    </GlassText>
-                    <GlassText
-                      className={`font-outfit-bold text-[10px] uppercase tracking-widest ${tone.text}`}
-                    >
-                      {t(`groupDetail.${tone.labelKey}`)}
-                    </GlassText>
-                  </View>
-                  <GlassText variant="h3" className={`text-lg ${tone.text}`}>
-                    {item.amount > 0 ? '+' : ''}
-                    {formatCurrency(item.amount)}
+          {myDebts.length === 0 && myCredits.length === 0 ? (
+            <EmptyState
+              icon={ShieldCheck}
+              title={t('groupDetail.allSettled')}
+              description={t('groupDetail.allSettledDesc')}
+            />
+          ) : (
+            <>
+              {myDebts.length > 0 ? (
+                <>
+                  <GlassText variant="caption" className="mb-3 ml-1 tracking-widest">
+                    {t('groupDetail.youPay')}
                   </GlassText>
-                </View>
-              );
-            })}
-          </GlassCard>
+                  {myDebts.map((d) => {
+                    const pending = pendingSettlements.find(
+                      (s) => s.debtor_id === user?.id && s.creditor_id === d.to_id
+                    );
+                    return (
+                      <GlassCard key={d.to_id} intensity={20} className="mb-3" padding="p-4">
+                        <View className="flex-row items-center">
+                          <View className="mr-3 h-11 w-11 items-center justify-center rounded-2xl border border-danger/20 bg-danger/10">
+                            <ArrowUpRight size={18} color={colors.danger} />
+                          </View>
+                          <View className="flex-1">
+                            <GlassText variant="caption" className="text-[10px]">
+                              {t('groupDetail.payTo')}
+                            </GlassText>
+                            <GlassText className="font-outfit-bold text-base" numberOfLines={1}>
+                              {d.to_name}
+                            </GlassText>
+                          </View>
+                          <GlassText variant="h3" className="text-lg text-danger">
+                            {formatCurrency(d.amount)}
+                          </GlassText>
+                        </View>
+                        {pending ? (
+                          <View className="mt-3 flex-row items-center justify-center rounded-2xl bg-surface-fill py-2.5">
+                            <Clock size={14} color={colors.accent} />
+                            <GlassText className="ml-2 font-outfit-bold text-xs text-content-muted">
+                              {t('settlement.pendingConfirm')}
+                            </GlassText>
+                          </View>
+                        ) : (
+                          <TouchableOpacity
+                            disabled={settling}
+                            onPress={() => handlePayDebt(d.to_id, d.amount)}
+                            className="mt-3 flex-row items-center justify-center rounded-2xl bg-content py-2.5"
+                          >
+                            <Camera size={16} color={colors.white} />
+                            <GlassText className="ml-2 font-outfit-bold text-xs text-white">
+                              {t('groupDetail.payDebt')}
+                            </GlassText>
+                          </TouchableOpacity>
+                        )}
+                      </GlassCard>
+                    );
+                  })}
+                </>
+              ) : null}
 
-          <Button
-            title={t('groupDetail.settleNow')}
-            onPress={() => router.push(`/group/${id}/settlement-detail`)}
-            className="w-full"
-          />
+              {myCredits.length > 0 ? (
+                <>
+                  <GlassText variant="caption" className="mb-3 ml-1 mt-4 tracking-widest">
+                    {t('groupDetail.youReceive')}
+                  </GlassText>
+                  {myCredits.map((d) => {
+                    const pending = pendingSettlements.find(
+                      (s) => s.debtor_id === d.from_id && s.creditor_id === user?.id
+                    );
+                    return (
+                      <GlassCard key={d.from_id} intensity={20} className="mb-3" padding="p-4">
+                        <View className="flex-row items-center">
+                          <View className="mr-3 h-11 w-11 items-center justify-center rounded-2xl border border-success/20 bg-success/10">
+                            <ArrowDownLeft size={18} color={colors.success} />
+                          </View>
+                          <View className="flex-1">
+                            <GlassText variant="caption" className="text-[10px]">
+                              {t('groupDetail.receiveFrom')}
+                            </GlassText>
+                            <GlassText className="font-outfit-bold text-base" numberOfLines={1}>
+                              {d.from_name}
+                            </GlassText>
+                          </View>
+                          <GlassText variant="h3" className="text-lg text-success">
+                            {formatCurrency(d.amount)}
+                          </GlassText>
+                        </View>
+                        {pending ? (
+                          <View className="mt-3 flex-row items-center gap-2">
+                            {pending.proof_image_url ? (
+                              <TouchableOpacity
+                                onPress={() => setProofUrl(pending.proof_image_url)}
+                                className="h-11 w-11 items-center justify-center rounded-2xl border border-surface-line bg-surface-fill"
+                              >
+                                <Eye size={18} color={colors.content} />
+                              </TouchableOpacity>
+                            ) : null}
+                            <TouchableOpacity
+                              disabled={settling}
+                              onPress={() => handleConfirmDebt(pending.settlement_id)}
+                              className="flex-1 flex-row items-center justify-center rounded-2xl bg-success py-2.5"
+                            >
+                              <Check size={16} color={colors.white} />
+                              <GlassText className="ml-2 font-outfit-bold text-xs text-white">
+                                {t('groupDetail.confirmPaid')}
+                              </GlassText>
+                            </TouchableOpacity>
+                          </View>
+                        ) : (
+                          <View className="mt-3 flex-row items-center justify-center rounded-2xl bg-surface-fill py-2.5">
+                            <Clock size={14} color={colors.contentFaint} />
+                            <GlassText className="ml-2 font-outfit-medium text-xs text-content-faint">
+                              {t('groupDetail.notPaidYet')}
+                            </GlassText>
+                          </View>
+                        )}
+                      </GlassCard>
+                    );
+                  })}
+                </>
+              ) : null}
+            </>
+          )}
         </View>
       ) : null}
 
@@ -482,6 +623,30 @@ export default function GroupDetailsScreen() {
           )}
         </View>
       ) : null}
+
+      {/* Proof image viewer */}
+      <Modal
+        visible={!!proofUrl}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setProofUrl(null)}
+      >
+        <TouchableOpacity
+          activeOpacity={1}
+          onPress={() => setProofUrl(null)}
+          className="flex-1 items-center justify-center bg-black/90 px-6"
+        >
+          {proofUrl ? (
+            <Image source={{ uri: proofUrl }} className="h-3/4 w-full" resizeMode="contain" />
+          ) : null}
+          <TouchableOpacity
+            onPress={() => setProofUrl(null)}
+            className="absolute right-6 top-16 h-10 w-10 items-center justify-center rounded-full bg-white/20"
+          >
+            <X size={20} color={colors.white} />
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </Modal>
     </Screen>
   );
 }

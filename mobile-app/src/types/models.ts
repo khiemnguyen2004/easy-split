@@ -106,6 +106,7 @@ export interface GroupDashboard {
   expenses: GroupExpense[];
   netBalances: NetBalance[];
   fundings: Fund[];
+  pendingSettlements: DebtSettlementRow[];
 }
 
 /** Aggregated balance totals across all of the user's groups. */

@@ -59,7 +59,7 @@ function RootLayoutNav() {
           >
             <Stack.Screen name="index" options={{ headerShown: false }} />
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen name="(auth)/login" options={{ animation: 'fade' }} />
+            <Stack.Screen name="(auth)/login" options={{ animation: 'none' }} />
             <Stack.Screen name="(auth)/register" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="group/[id]" options={{ animation: 'slide_from_right' }} />
             <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />

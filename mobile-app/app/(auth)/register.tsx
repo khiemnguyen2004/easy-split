@@ -75,13 +75,11 @@ export default function RegisterScreen() {
           />
 
           <View className="mb-6 items-center">
-            <View className="h-20 w-20 items-center justify-center overflow-hidden rounded-[24px] border border-surface-line bg-surface-fill shadow-xl">
-              <Image
-                source={require('../../assets/icon.png')}
-                style={{ width: '100%', height: '100%', opacity: 0.9 }}
-                resizeMode="contain"
-              />
-            </View>
+            <Image
+              source={require('../../assets/easy-split-logo.png')}
+              style={{ width: 96, height: 96 }}
+              resizeMode="contain"
+            />
           </View>
 
           <View className="mb-8 items-center">
