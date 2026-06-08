@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  /* Fallback values (light). The active theme is driven at runtime by
+     `themeVars[scheme]` (src/theme/index.ts) applied via vars() on the root
+     View in app/_layout.tsx, which overrides these for every descendant — so
+     both light and dark are controlled in JS by the theme store, independent of
+     NativeWind's dark-class mechanism. Channel triples feed
+     `rgb(var(--c-x) / <alpha>)`. */
+  :root {
+    --c-content: 30 27 75;
+    --c-content-muted: rgba(30, 27, 75, 0.55);
+    --c-content-faint: rgba(30, 27, 75, 0.4);
+    --c-surface-glass: rgba(255, 255, 255, 0.4);
+    --c-accent: 255 81 47;
+    --c-accent-alt: 221 36 118;
+    --c-success: 16 185 129;
+    --c-danger: 251 113 133;
+  }
+}

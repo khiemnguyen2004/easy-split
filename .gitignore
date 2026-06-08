@@ -28,3 +28,6 @@ supabase/functions/.import_map.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Agents
+.agents/

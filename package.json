@@ -1,0 +1,11 @@
+{
+  "name": "easy-split",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "ios": "yarn --cwd mobile-app ios",
+    "android": "yarn --cwd mobile-app android",
+    "start": "yarn --cwd mobile-app start",
+    "mobile": "yarn --cwd mobile-app start"
+  }
+}
