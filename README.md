@@ -19,21 +19,43 @@ EasySplit is a mobile application designed for debt-splitting and group expense 
 The application follows a modern mobile-client to backend-as-a-service architecture.
 
 ```mermaid
-graph TD
-    User((User))
-    App[Mobile App - Expo]
-    Supabase[Supabase Backend]
-    DB[(PostgreSQL)]
-    Auth[Supabase Auth]
-    Storage[Supabase Storage]
-    Functions[Edge Functions]
+---
+config:
+  layout: dagre
+---
+flowchart TB
+ subgraph Client["CLIENT APP (React Native / Expo)"]
+        Logic["Xử lý Logic (Zustand & Hooks)"]
+        UI["Giao diện (Tailwind, Glassmorphic)"]
+  end
+ subgraph Gateway["SUPABASE GATEWAY"]
+        Auth["Supabase Auth (Xác thực)"]
+        Storage["Supabase Storage (Lưu trữ ảnh)"]
+        Realtime["Supabase Realtime (Realtime Chat)"]
+  end
+ subgraph Database["DATABASE LAYER (PostgreSQL)"]
+        RLS{"RLS & Triggers"}
+        Tables[("Database Tables")]
+  end
+    UI <--> Logic
+    Tables <--> RLS
+    Logic <-- Gửi JWT / Đăng nhập --> Auth
+    Logic <-- Upload hóa đơn --> Storage
+    Logic <-- Kết nối Socket --> Realtime
+    Auth <--> Tables
+    Storage <--> Tables
+    Realtime <--> Tables
 
-    User <--> App
-    App <--> Auth
-    App <--> DB
-    App <--> Storage
-    App <--> Functions
-    Functions <--> DB
+    style UI fill:#FFFFFF,stroke:#0284C7,color:#0369A1
+    style Logic fill:#FFFFFF,stroke:#0284C7,color:#0369A1
+    style Auth fill:#FFFFFF,stroke:#7C3AED,color:#6D28D9
+    style Storage fill:#FFFFFF,stroke:#7C3AED,color:#6D28D9
+    style Realtime fill:#FFFFFF,stroke:#7C3AED,color:#6D28D9
+    style Tables fill:#FFFFFF,stroke:#059669,color:#047857
+    style RLS fill:#FFEDD5,stroke:#EA580C,stroke-width:2px,color:#9A3412
+    style Client fill:#E0F2FE,stroke:#0284C7,stroke-width:2px,color:#0369A1
+    style Gateway fill:#F3E8FF,stroke:#7C3AED,stroke-width:2px,color:#6D28D9
+    style Database fill:#ECFDF5,stroke:#059669,stroke-width:2px,color:#047857
 ```
 
 ## Tech Stack
